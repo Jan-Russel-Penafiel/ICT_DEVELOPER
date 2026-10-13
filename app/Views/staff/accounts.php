@@ -7,6 +7,12 @@
     </div>
     <button type="button" class="button" data-modal-open="import-accounts">Import section list</button>
 </header>
+<section class="panel filter-bar" aria-label="Institutional account filters">
+    <label>Campus<select data-table-filter="account-batches-table" data-column="0"><option value="">All campuses</option><?php foreach ($batches as $batch): ?><option value="<?= esc($batch['campus'] ?? 'Unknown') ?>"><?= esc($batch['campus'] ?? 'Unknown') ?></option><?php endforeach ?></select></label>
+    <label>Section<select data-table-filter="account-batches-table" data-column="2"><option value="">All sections</option><?php $allSections = []; foreach ($sectionsByCampus as $campusId => $sections) { foreach ($sections as $section) { $allSections[$section] = $section; } } ?><?php foreach (array_unique($allSections) as $section): ?><option value="<?= esc($section) ?>"><?= esc($section) ?></option><?php endforeach ?></select></label>
+    <div class="filter-summary"><span class="filter-summary-label">Matching batches</span><strong data-filter-count="account-batches-table"><?= count($batches) ?> shown</strong></div>
+    <div class="filter-actions"><button type="button" class="button" data-apply-filters="account-batches-table">Filter</button><button type="button" class="button secondary" data-reset-filters="account-batches-table">Reset</button></div>
+</section>
 
 <dialog id="import-accounts" class="modal" data-open-on-error>
     <header class="modal-header">
@@ -80,7 +86,7 @@ filterAccountSections();
                 <?php foreach ($batches as $batch): ?>
                     <tr>
                         <td><?= esc($batch['campus']) ?></td>
-                        <td><?= esc($batch['source_file']) ?></td>
+                        <td><?php if (! empty($batch['source_path'])): ?><a href="<?= site_url('staff/accounts/' . $batch['id'] . '/source') ?>"><?= esc($batch['source_file']) ?></a><?php else: ?><?= esc($batch['source_file']) ?><?php endif ?></td>
                         <td><?= esc($batch['section'] ?: '-') ?></td>
                         <td><span class="chip"><?= esc((string) $batch['account_count']) ?> accounts</span></td>
                         <td>

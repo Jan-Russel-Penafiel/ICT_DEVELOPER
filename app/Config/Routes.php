@@ -39,6 +39,7 @@ $routes->group('staff', ['filter' => 'auth'], static function ($routes) {
     $routes->get('accounts', 'Staff\AccountsController::index', ['filter' => 'group:admin,ict']);
     $routes->post('accounts/import', 'Staff\AccountsController::import', ['filter' => 'group:admin,ict']);
     $routes->get('accounts/import-template', 'Staff\AccountsController::downloadTemplate', ['filter' => 'group:admin,ict']);
+    $routes->get('accounts/(:num)/source', 'Staff\AccountsController::downloadSource/$1', ['filter' => 'group:admin,ict']);
     $routes->get('accounts/(:num)/export', 'Staff\AccountsController::export/$1', ['filter' => 'group:admin,ict']);
     $routes->post('accounts/(:num)/edit', 'Staff\AccountsController::updateBatch/$1', ['filter' => 'group:admin,ict']);
     $routes->post('accounts/(:num)/delete', 'Staff\AccountsController::deleteBatch/$1', ['filter' => 'group:admin']);

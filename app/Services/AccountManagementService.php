@@ -76,7 +76,8 @@ final class AccountManagementService
         if ($existingEmails !== []) throw new RuntimeException('One or more students in this section already have an institutional account.');
 
         $db = db_connect(); $db->transStart();
-        $batchId = $this->batches->insert(['campus_id' => $campusId, 'section' => $section, 'source_file' => $file->getClientName(), 'created_by' => $userId], true);
+        $sourcePath = $file->getRandomName();
+        $batchId = $this->batches->insert(['campus_id' => $campusId, 'section' => $section, 'source_file' => $file->getClientName(), 'source_path' => 'account-batches/' . $sourcePath, 'created_by' => $userId], true);
         $added = 0;
         foreach (array_keys($studentNumbers) as $studentNo) {
             $student = $studentsByNumber[$studentNo];
@@ -86,6 +87,9 @@ final class AccountManagementService
         }
         $db->transComplete();
         if (! $db->transStatus()) throw new RuntimeException('The account list could not be imported.');
+        $uploadPath = WRITEPATH . 'uploads/account-batches';
+        if (! is_dir($uploadPath)) mkdir($uploadPath, 0775, true);
+        $file->move($uploadPath, $sourcePath);
         return $added;
     }
 
@@ -103,6 +107,15 @@ final class AccountManagementService
     private function normalizeSection(string $section): string
     {
         return strtolower(trim((string) preg_replace('/\s+/', ' ', $section)));
+    }
+
+    public function sourceFilePath(int $id): array
+    {
+        $batch = $this->batches->find($id);
+        if (! $batch || empty($batch['source_path'])) throw PageNotFoundException::forPageNotFound();
+        $path = WRITEPATH . 'uploads/' . $batch['source_path'];
+        if (! is_file($path)) throw PageNotFoundException::forPageNotFound();
+        return ['path' => $path, 'name' => $batch['source_file'] ?: basename($path)];
     }
 
     public function exportCsv(int $id): string
@@ -161,8 +174,10 @@ final class AccountManagementService
 
     public function archiveBatch(int $id): void
     {
-        if (! $this->batches->find($id)) throw PageNotFoundException::forPageNotFound();
+        $batch = $this->batches->find($id);
+        if (! $batch) throw PageNotFoundException::forPageNotFound();
         $db = db_connect(); $db->transStart(); $this->accounts->deleteForBatch($id); $this->batches->delete($id); $db->transComplete();
         if (! $db->transStatus()) throw new RuntimeException('The account batch could not be archived.');
+        if (! empty($batch['source_path']) && is_file(WRITEPATH . 'uploads/' . $batch['source_path'])) unlink(WRITEPATH . 'uploads/' . $batch['source_path']);
     }
 }

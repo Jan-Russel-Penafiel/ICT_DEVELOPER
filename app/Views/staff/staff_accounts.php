@@ -1,7 +1,85 @@
 <?= $this->extend('layouts/base') ?>
 <?= $this->section('content') ?>
-<header class="page-heading"><div><h1>Staff accounts</h1><p class="muted">Manage sign-in access, roles, and campus assignments.</p></div><button type="button" class="button" data-modal-open="create-account">Create staff account</button></header>
-<dialog id="create-account" class="modal" data-open-on-error><header class="modal-header"><h2>Create staff account</h2><button type="button" class="modal-close" data-modal-close>×</button></header><div class="modal-body"><form method="post" class="grid" action="<?= site_url('staff/users') ?>"><?= csrf_field() ?><label>Username<input name="username" required></label><label>Email address<input type="email" name="email" required></label><label>Password<input type="password" name="password" required></label><label>Confirm password<input type="password" name="password_confirm" required></label><label>Role<select name="group"><?php foreach ($groups as $key=>$group): ?><option value="<?= esc($key) ?>"><?= esc($group['title']) ?></option><?php endforeach ?></select></label><label>Campus<select name="campus_id"><option value="">No campus restriction</option><?php foreach ($campuses as $campus): ?><option value="<?= $campus['id'] ?>"><?= esc($campus['name']) ?></option><?php endforeach ?></select></label><div class="modal-footer full"><button type="button" class="button secondary" data-modal-close>Cancel</button><button class="button">Create account</button></div></form></div></dialog>
-<section class="table-workspace"><header class="table-toolbar"><div class="table-title"><h2>User accounts</h2><span class="table-count" data-table-count="staff-users-table"><?= count($users) ?> shown</span></div><div class="table-tools"><input class="table-search" type="search" data-table-search="staff-users-table" placeholder="Search staff accounts"></div></header><div class="table-wrap"><table id="staff-users-table" class="data-table"><thead><tr><th>Username</th><th>Email</th><th>Role</th><th>Campus</th><th>Status</th><th>Actions</th></tr></thead><tbody><?php foreach ($users as $user): ?><tr><td><?= esc($user['username']) ?></td><td><?= esc($user['email']) ?></td><td><?= esc($user['groups'] ?: 'Unassigned') ?></td><td><?= esc($user['campus'] ?: 'All campuses') ?></td><td><span class="chip"><?= $user['active'] ? 'Active' : 'Inactive' ?></span></td><td><div class="row-actions"><button type="button" class="button small outline" data-modal-open="user-edit-<?= $user['id'] ?>">Edit</button><?php if ((int)$user['id'] !== (int)auth()->id()): ?><form method="post" action="<?= site_url('staff/users/'.$user['id'].'/delete') ?>" data-confirm="Archive this staff account? The user will no longer be able to sign in."><?= csrf_field() ?><button class="button small danger">Delete</button></form><?php endif ?></div></td></tr><?php endforeach ?><?php if ($users === []): ?><tr class="empty-row"><td colspan="6">No staff accounts found.</td></tr><?php endif ?></tbody></table></div></section>
-<?php foreach ($users as $user): ?><dialog id="user-edit-<?= $user['id'] ?>" class="modal"><header class="modal-header"><h2>Edit staff account</h2><button type="button" class="modal-close" data-modal-close>×</button></header><div class="modal-body"><form method="post" class="grid" action="<?= site_url('staff/users/'.$user['id'].'/edit') ?>"><?= csrf_field() ?><label>Username<input name="username" value="<?= esc($user['username']) ?>" required></label><label>Email<input type="email" name="email" value="<?= esc($user['email']) ?>" required></label><label>Password <span class="muted">Leave blank to keep current</span><input type="password" name="password"></label><label>Confirm password<input type="password" name="password_confirm"></label><label>Role<select name="group"><?php foreach ($groups as $key=>$group): ?><option value="<?= esc($key) ?>" <?= in_array($key, array_map('trim', explode(',', $user['groups'] ?? '')), true) ? 'selected' : '' ?>><?= esc($group['title']) ?></option><?php endforeach ?></select></label><label>Campus<select name="campus_id"><option value="">No campus restriction</option><?php foreach ($campuses as $campus): ?><option value="<?= $campus['id'] ?>" <?= (int)($user['campus_id'] ?? 0) === (int)$campus['id'] ? 'selected' : '' ?>><?= esc($campus['name']) ?></option><?php endforeach ?></select></label><label>Status<select name="active"><option value="1" <?= $user['active'] ? 'selected' : '' ?>>Active</option><option value="0" <?= ! $user['active'] ? 'selected' : '' ?>>Inactive</option></select></label><div class="modal-footer full"><button type="button" class="button secondary" data-modal-close>Cancel</button><button class="button">Save changes</button></div></form></div></dialog><?php endforeach ?>
+<header class="page-heading">
+    <div>
+        <h1>Staff accounts</h1>
+        <p class="muted">Manage sign-in access, roles, and campus assignments.</p>
+    </div>
+</header>
+<section class="panel filter-bar" aria-label="Staff account filters">
+    <label>Role<select data-table-filter="staff-users-table" data-column="2">
+            <option value="">All roles</option><?php foreach ($groups as $key => $group): ?><option value="<?= esc($key) ?>"><?= esc($group['title']) ?></option><?php endforeach ?>
+        </select></label>
+    <label>Campus<select data-table-filter="staff-users-table" data-column="3">
+            <option value="">All campuses</option><?php foreach ($campuses as $campus): ?><option value="<?= esc($campus['id']) ?>"><?= esc($campus['name']) ?></option><?php endforeach ?>
+        </select></label>
+    <label>Status<select data-table-filter="staff-users-table" data-column="4">
+            <option value="">All statuses</option>
+            <option value="1">Active</option>
+            <option value="0">Inactive</option>
+        </select></label>
+    <div class="filter-summary"><span class="filter-summary-label">Matching accounts</span><strong data-filter-count="staff-users-table"><?= count($users) ?> shown</strong></div>
+    <div class="filter-actions"><button type="button" class="button" data-apply-filters="staff-users-table">Filter</button><button type="button" class="button secondary" data-reset-filters="staff-users-table">Reset</button></div>
+</section>
+<dialog id="create-account" class="modal" data-open-on-error>
+    <header class="modal-header">
+        <h2>Create staff account</h2><button type="button" class="modal-close" data-modal-close>×</button>
+    </header>
+    <div class="modal-body">
+        <form method="post" class="grid" action="<?= site_url('staff/users') ?>"><?= csrf_field() ?><label>Username<input name="username" required></label><label>Email address<input type="email" name="email" required></label><label>Password<input type="password" name="password" required></label><label>Confirm password<input type="password" name="password_confirm" required></label><label>Role<select name="group"><?php foreach ($groups as $key => $group): ?><option value="<?= esc($key) ?>"><?= esc($group['title']) ?></option><?php endforeach ?></select></label><label>Campus<select name="campus_id">
+                    <option value="">No campus restriction</option><?php foreach ($campuses as $campus): ?><option value="<?= $campus['id'] ?>"><?= esc($campus['name']) ?></option><?php endforeach ?>
+                </select></label>
+            <div class="modal-footer full"><button type="button" class="button secondary" data-modal-close>Cancel</button><button class="button">Create account</button></div>
+        </form>
+    </div>
+</dialog>
+<section class="table-workspace">
+    <header class="table-toolbar">
+        <div class="table-title">
+            <h2>User accounts</h2><span class="table-count" data-table-count="staff-users-table"><?= count($users) ?> shown</span>
+        </div>
+        <div class="table-tools"><input class="table-search" type="search" data-table-search="staff-users-table" placeholder="Search staff accounts"></div>
+    </header>
+    <div class="table-wrap">
+        <table id="staff-users-table" class="data-table">
+            <thead>
+                <tr>
+                    <th>Username</th>
+                    <th>Email</th>
+                    <th>Role</th>
+                    <th>Campus</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody><?php foreach ($users as $user): ?><tr>
+                        <td><?= esc($user['username']) ?></td>
+                        <td><?= esc($user['email']) ?></td>
+                        <td><?= esc($user['groups'] ?: 'Unassigned') ?></td>
+                        <td><?= esc($user['campus'] ?: 'All campuses') ?></td>
+                        <td><span class="chip"><?= $user['active'] ? 'Active' : 'Inactive' ?></span></td>
+                        <td>
+                            <div class="row-actions"><button type="button" class="button small outline" data-modal-open="user-edit-<?= $user['id'] ?>">Edit</button><?php if ((int)$user['id'] !== (int)auth()->id()): ?><form method="post" action="<?= site_url('staff/users/' . $user['id'] . '/delete') ?>" data-confirm="Archive this staff account? The user will no longer be able to sign in."><?= csrf_field() ?><button class="button small danger">Delete</button></form><?php endif ?></div>
+                        </td>
+                    </tr><?php endforeach ?><?php if ($users === []): ?><tr class="empty-row">
+                        <td colspan="6">No staff accounts found.</td>
+                    </tr><?php endif ?></tbody>
+        </table>
+    </div>
+</section>
+<?php foreach ($users as $user): ?><dialog id="user-edit-<?= $user['id'] ?>" class="modal">
+        <header class="modal-header">
+            <h2>Edit staff account</h2><button type="button" class="modal-close" data-modal-close>×</button>
+        </header>
+        <div class="modal-body">
+            <form method="post" class="grid" action="<?= site_url('staff/users/' . $user['id'] . '/edit') ?>"><?= csrf_field() ?><label>Username<input name="username" value="<?= esc($user['username']) ?>" required></label><label>Email<input type="email" name="email" value="<?= esc($user['email']) ?>" required></label><label>Password <span class="muted">Leave blank to keep current</span><input type="password" name="password"></label><label>Confirm password<input type="password" name="password_confirm"></label><label>Role<select name="group"><?php foreach ($groups as $key => $group): ?><option value="<?= esc($key) ?>" <?= in_array($key, array_map('trim', explode(',', $user['groups'] ?? '')), true) ? 'selected' : '' ?>><?= esc($group['title']) ?></option><?php endforeach ?></select></label><label>Campus<select name="campus_id">
+                        <option value="">No campus restriction</option><?php foreach ($campuses as $campus): ?><option value="<?= $campus['id'] ?>" <?= (int)($user['campus_id'] ?? 0) === (int)$campus['id'] ? 'selected' : '' ?>><?= esc($campus['name']) ?></option><?php endforeach ?>
+                    </select></label><label>Status<select name="active">
+                        <option value="1" <?= $user['active'] ? 'selected' : '' ?>>Active</option>
+                        <option value="0" <?= ! $user['active'] ? 'selected' : '' ?>>Inactive</option>
+                    </select></label>
+                <div class="modal-footer full"><button type="button" class="button secondary" data-modal-close>Cancel</button><button class="button">Save changes</button></div>
+            </form>
+        </div>
+    </dialog><?php endforeach ?>
 <?= $this->endSection() ?>

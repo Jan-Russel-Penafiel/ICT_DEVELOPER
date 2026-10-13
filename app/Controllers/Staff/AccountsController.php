@@ -46,6 +46,15 @@ final class AccountsController extends BaseController
             ->setBody($this->accountService->importTemplate());
     }
 
+    public function downloadSource(int $id)
+    {
+        $source = $this->accountService->sourceFilePath($id);
+        return $this->response
+            ->setHeader('Content-Type', mime_content_type($source['path']) ?: 'application/octet-stream')
+            ->setHeader('Content-Disposition', 'attachment; filename="' . str_replace('"', '', $source['name']) . '"')
+            ->setBody((string) file_get_contents($source['path']));
+    }
+
     public function updateBatch(int $id)
     {
         $data = $this->request->getPost();

@@ -14,6 +14,10 @@ class Security extends BaseConfig
      * Protection Method for Cross Site Request Forgery protection.
      *
      * @var string 'cookie' or 'session'
+     * Using 'cookie' stores the CSRF token in a browser cookie rather than
+     * server session. This avoids issues with session regeneration across
+     * multiple tabs, browser back button, and ensures the token persists
+     * reliably across requests.
      */
     public string $csrfProtection = 'session';
 
@@ -70,8 +74,10 @@ class Security extends BaseConfig
      * --------------------------------------------------------------------------
      *
      * Regenerate CSRF Token on every submission.
+     * Set to false to prevent issues with multiple tabs, browser back button,
+     * and modal forms where the token becomes stale after another submission.
      */
-    public bool $regenerate = true;
+    public bool $regenerate = false;
 
     /**
      * --------------------------------------------------------------------------

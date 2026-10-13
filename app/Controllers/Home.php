@@ -14,7 +14,7 @@ class Home extends BaseController
     public function index(): string
     {
         return view('public/home', [
-            'title' => 'SKSU ICT Service Portal',
+            'title' => 'SKSU-IOMS Service Portal',
             'isLandingPage' => true,
         ]);
     }
@@ -24,7 +24,7 @@ class Home extends BaseController
         $ref = trim((string) $this->request->getGet('ref'));
 
         return view('public/id', [
-            'title' => 'Submit Request | SKSU ICT Service Portal',
+            'title' => 'Submit Request | SKSU-IOMS Service Portal',
             'registrationLinks' => $this->landing->registrationLinks(),
             'ref' => $ref,
             'ticket' => $ref === '' ? null : $this->portal->trackingData($ref)['ticket'],
