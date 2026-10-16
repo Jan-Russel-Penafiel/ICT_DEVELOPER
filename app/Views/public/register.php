@@ -1,5 +1,9 @@
 <?= $this->extend('layouts/base') ?>
 <?= $this->section('content') ?>
+<?php
+$link = $link ?? [];
+$open = $open ?? false;
+?>
 <section class="panel">
     <h1><?= esc($link['campus_name']) ?> ID registration</h1>
     <p class="muted">School year <?= esc($link['school_year']) ?> &middot; ID release begins <?= esc(format_manila_date($link['release_date'])) ?></p>

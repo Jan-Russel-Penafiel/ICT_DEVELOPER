@@ -1,5 +1,9 @@
 <?= $this->extend('layouts/base') ?>
 <?= $this->section('content') ?>
+<?php
+$campusStats = $campusStats ?? [];
+$counts = $counts ?? ['id' => 0, 'reset' => 0, 'repair' => 0];
+?>
 <header class="page-heading">
     <div>
         <h1>Staff workspace</h1>

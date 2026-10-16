@@ -7,7 +7,6 @@
 
     /* HERO */
     .landing-hero{position:relative;display:flex;align-items:center;min-height:100vh;padding:clamp(120px,15vh,150px) 0 clamp(70px,10vh,110px);background:radial-gradient(1000px 520px at 88% -10%,rgba(74,222,128,.32),transparent 60%),radial-gradient(900px 560px at -10% 115%,rgba(8,123,67,.55),transparent 55%),linear-gradient(135deg,#041f14 0%,#065f36 55%,#0a8a4c 100%);color:#fff;overflow:hidden}
-    .landing-hero::before{content:"";position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.05) 1px,transparent 1px);background-size:44px 44px;mask-image:radial-gradient(ellipse at 70% 30%,black,transparent 75%)}
     .landing-hero::after{content:"";position:absolute;right:-10vw;bottom:-18vw;width:min(46vw,620px);aspect-ratio:1;border-radius:50%;background:radial-gradient(circle,rgba(74,222,128,.22),transparent 65%)}
     .landing-hero-inner{position:relative;z-index:1;width:min(1160px,calc(100% - 40px));display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,.95fr);gap:clamp(36px,5vw,72px);align-items:center;text-align:left}
     .hero-copy{display:grid;justify-items:start;max-width:620px}
@@ -33,7 +32,7 @@
     .landing-copy p:last-child{margin-bottom:0}
 
     /* SERVICES */
-    .landing-services{display:grid;grid-template-columns:repeat(4,1fr);gap:18px;width:min(1160px,calc(100% - 40px));margin:0 auto clamp(64px,8vw,104px)}
+    .landing-services{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;width:min(1160px,calc(100% - 40px));margin:0 auto clamp(64px,8vw,104px)}
     .landing-service{display:flex;flex-direction:column;min-height:250px;padding:28px 24px;border:1px solid #e2ece6;border-radius:18px;background:#fff;color:inherit;text-decoration:none;box-shadow:0 8px 24px rgba(18,38,28,.05);transition:transform .2s ease,box-shadow .2s ease,border-color .2s ease}
     .landing-service:hover,.landing-service:focus-visible{transform:translateY(-6px);border-color:#0a8a4c;box-shadow:0 18px 40px rgba(8,123,67,.16);outline:0}
     .landing-service-number{display:inline-grid;place-items:center;width:38px;height:38px;margin-bottom:22px;border-radius:12px;background:#e7f6ec;color:#0a8a4c;font-size:13px;font-weight:800;letter-spacing:.05em;transition:background .2s ease,color .2s ease}
@@ -105,7 +104,9 @@
         <a class="landing-service" href="<?= site_url('id') ?>"><span class="landing-service-number">01</span><h3>Campus ID</h3><p>Register for an available Campus ID cycle published by your Registrar.</p><span>View registration links &rarr;</span></a>
         <a class="landing-service" href="<?= site_url('id') ?>?request=repair"><span class="landing-service-number">02</span><h3>Hardware repair</h3><p>Report an issue with university equipment and receive a service reference.</p><span>Submit repair request &rarr;</span></a>
         <a class="landing-service" href="<?= site_url('id') ?>?request=reset"><span class="landing-service-number">03</span><h3>Password reset</h3><p>Request account assistance. Identity verification is completed before access is reset.</p><span>Request a reset &rarr;</span></a>
-        <a class="landing-service" href="<?= site_url('id') ?>?request=track"><span class="landing-service-number">04</span><h3>Request tracking</h3><p>Check the latest status of your Campus ID, repair, or reset request.</p><span>Check status &rarr;</span></a>
+        <a class="landing-service" href="<?= site_url('id') ?>?request=institutional-account"><span class="landing-service-number">04</span><h3>Institutional account</h3><p>Request an institutional account individually and receive a reference for follow-up.</p><span>Submit account request &rarr;</span></a>
+        <a class="landing-service" href="<?= site_url('id') ?>?request=replacement"><span class="landing-service-number">05</span><h3>Lost-ID replacement</h3><p>Request a replacement for a lost Campus ID and receive a reference for follow-up.</p><span>Request replacement &rarr;</span></a>
+        <a class="landing-service" href="<?= site_url('id') ?>?request=track"><span class="landing-service-number">06</span><h3>Request tracking</h3><p>Check the latest status of your Campus ID, repair, reset, account, or replacement request.</p><span>Check status &rarr;</span></a>
     </section>
 
     <section class="landing-section landing-steps">

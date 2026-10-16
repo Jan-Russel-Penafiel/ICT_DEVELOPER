@@ -7,8 +7,10 @@ namespace App\Services;
 use App\Models\AccountBatchModel;
 use App\Models\AccountModel;
 use App\Models\CampusModel;
+use App\Models\InstitutionalAccountRequestModel;
 use App\Models\SettingModel;
 use App\Models\StudentModel;
+use App\Services\StatusTransitionService;
 use CodeIgniter\HTTP\Files\UploadedFile;
 use CodeIgniter\Exceptions\PageNotFoundException;
 use PhpOffice\PhpSpreadsheet\IOFactory;
@@ -24,6 +26,7 @@ final class AccountManagementService
         private readonly CampusModel $campuses = new CampusModel(),
         private readonly StudentModel $students = new StudentModel(),
         private readonly SettingModel $settings = new SettingModel(),
+        private readonly InstitutionalAccountRequestModel $individualRequests = new InstitutionalAccountRequestModel(),
     ) {
     }
 
@@ -31,7 +34,8 @@ final class AccountManagementService
     {
         return [
             'batches' => $this->batches->withAccountCounts(),
-            'campuses' => $this->campuses->orderBy('name')->findAll(),
+            'individualRequests' => $this->individualRequests->allWithCampus(),
+            'campuses' => $this->campuses->alphabetical(),
             'sectionsByCampus' => $this->students->sectionsByCampus(),
         ];
     }
@@ -170,6 +174,32 @@ final class AccountManagementService
         if ($accountCount !== $matchingStudentCount) throw new RuntimeException('The campus and section must match every student in this account batch.');
 
         $this->batches->update($id, ['campus_id' => (int) $data['campus_id'], 'section' => $section]);
+    }
+
+    public function changeBatchStatus(int $id, string $status): void
+    {
+        if (! $this->batches->find($id)) throw PageNotFoundException::forPageNotFound();
+
+        (new StatusTransitionService(db_connect()))->transition(
+            'account_batches',
+            $id,
+            $status,
+            ['active', 'inactive'],
+            'account_batch',
+        );
+    }
+
+    public function changeIndividualStatus(int $id, string $status): void
+    {
+        if (! $this->individualRequests->find($id)) throw PageNotFoundException::forPageNotFound();
+
+        (new StatusTransitionService(db_connect()))->transition(
+            'institutional_account_requests',
+            $id,
+            $status,
+            ['processing', 'completed', 'rejected'],
+            'institutional_account_request',
+        );
     }
 
     public function archiveBatch(int $id): void

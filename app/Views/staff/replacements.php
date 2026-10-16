@@ -1,5 +1,8 @@
 <?= $this->extend('layouts/base') ?>
 <?= $this->section('content') ?>
+<?php
+$requests = $requests ?? [];
+?>
 <header class="page-heading">
     <div>
         <h1>Lost-ID replacements</h1>
@@ -21,7 +24,8 @@
             <h2>Record replacement payment</h2><button type="button" class="modal-close" data-modal-close>×</button>
         </header>
         <div class="modal-body">
-            <form method="post" class="grid"><?= csrf_field() ?><label>Student number<input name="student_no" required></label><label>Official receipt number<input name="or_number" required></label>
+            <form method="post" class="grid"><?= csrf_field() ?><label class="full">Student number<input name="student_no" required></label>
+                <p class="muted full">The official receipt number will be generated automatically when the payment is recorded.</p>
                 <div class="modal-footer full"><button type="button" class="button secondary" data-modal-close>Cancel</button><button class="button">Record payment</button></div>
             </form>
         </div>
@@ -50,7 +54,7 @@
                         <td><?= esc($item['or_number']) ?></td>
                         <td><span class="chip"><?= esc($item['status']) ?></span></td>
                         <td>
-                            <div class="row-actions"><?php if (staff_can('admin', 'cashier')): ?><button type="button" class="button small outline" data-modal-open="replacement-edit-<?= $item['id'] ?>">Edit</button><?php endif ?><?php if (staff_can('admin')): ?><form method="post" action="<?= site_url('staff/replacements/' . $item['id'] . '/delete') ?>" data-confirm="Archive this replacement request? Its audit history will be retained."><?= csrf_field() ?><button class="button small danger">Delete</button></form><?php endif ?></div>
+                            <div class="row-actions"><?php if ($item['or_number'] !== null && trim((string) $item['or_number']) !== ''): ?><a class="button small outline" href="<?= site_url('staff/replacements/' . $item['id'] . '/receipt') ?>" target="_blank" rel="noopener">Print Official Receipt</a><?php endif ?><?php if (staff_can('admin')): ?><form method="post" action="<?= site_url('staff/replacements/' . $item['id'] . '/delete') ?>" data-confirm="Archive this replacement request? Its audit history will be retained."><?= csrf_field() ?><button class="button small danger">Delete</button></form><?php endif ?></div>
                         </td>
                     </tr><?php endforeach ?><?php if ($requests === []): ?><tr class="empty-row">
                         <td colspan="5">No replacement requests found.</td>
@@ -58,14 +62,4 @@
         </table>
     </div>
 </section>
-<?php foreach ($requests as $item): ?><?php if (staff_can('admin', 'cashier')): ?><dialog id="replacement-edit-<?= $item['id'] ?>" class="modal">
-    <header class="modal-header">
-        <h2>Edit replacement payment</h2><button type="button" class="modal-close" data-modal-close>×</button>
-    </header>
-    <div class="modal-body">
-        <form method="post" class="grid" action="<?= site_url('staff/replacements/' . $item['id'] . '/edit') ?>"><?= csrf_field() ?><label class="full">Official receipt number<input name="or_number" value="<?= esc($item['or_number']) ?>" required></label>
-            <div class="modal-footer full"><button type="button" class="button secondary" data-modal-close>Cancel</button><button class="button">Save changes</button></div>
-        </form>
-    </div>
-</dialog><?php endif ?><?php endforeach ?>
 <?= $this->endSection() ?>

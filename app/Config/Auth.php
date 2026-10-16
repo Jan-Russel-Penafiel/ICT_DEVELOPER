@@ -10,6 +10,16 @@ class Auth extends ShieldAuth
 {
     public bool $allowRegistration = false;
 
+    /**
+     * Keep users signed in with a persistent, database-backed token.
+     */
+    public array $sessionConfig = [
+        'field'              => 'user',
+        'allowRemembering'   => true,
+        'rememberCookieName' => 'remember',
+        'rememberLength'     => 30 * DAY,
+    ];
+
     public array $views = [
         'login' => 'auth/login',
         'register' => '\\CodeIgniter\\Shield\\Views\\register',

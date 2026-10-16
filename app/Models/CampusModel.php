@@ -11,7 +11,7 @@ final class CampusModel extends BaseIctModel
 
     public function alphabetical(): array
     {
-        return $this->orderBy('name')->findAll();
+        return $this->where('code !=', 'SHS')->orderBy('name')->findAll();
     }
 
     public function exists(int $campusId): bool

@@ -14,8 +14,6 @@
     .login-card label{display:grid;gap:6px;font-size:12px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:#065f46}
     .login-card input[type=email],.login-card input[type=password]{min-height:46px;padding:11px 14px;border:1.5px solid #d1e7da;border-radius:12px;font-size:14px;color:#12261c;background:#f9fefb;transition:border-color .18s ease,box-shadow .18s ease,background .18s ease}
     .login-card input:focus{outline:0;border-color:#10b981;background:#fff;box-shadow:0 0 0 4px rgba(16,185,129,.15)}
-    .login-card .remember-me{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;text-transform:none;letter-spacing:0;color:#3f5f50}
-    .login-card .remember-me input{width:16px;height:16px;accent-color:#059669}
     .login-card .button{min-height:48px;border:0;border-radius:12px;background:linear-gradient(135deg,#059669,#10b981);color:#fff;font-size:15px;font-weight:800;letter-spacing:.02em;cursor:pointer;box-shadow:0 12px 26px rgba(5,150,105,.35);transition:transform .18s ease,box-shadow .18s ease}
     .login-card .button:hover{transform:translateY(-2px);box-shadow:0 16px 32px rgba(5,150,105,.45)}
 </style>
@@ -31,9 +29,6 @@
             <label for="password">Password
                 <input id="password" type="password" name="password" autocomplete="current-password" required>
             </label>
-            <?php if (setting('Auth.sessionConfig')['allowRemembering']): ?>
-                <label class="remember-me"><input type="checkbox" name="remember" <?= old('remember') ? 'checked' : '' ?>> Keep me signed in on this device</label>
-            <?php endif ?>
             <button class="button" type="submit">Sign in</button>
         </form>
     </div>

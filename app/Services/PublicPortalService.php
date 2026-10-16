@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Services;
 
 use App\Models\IdRequestModel;
+use App\Models\InstitutionalAccountRequestModel;
+use App\Models\CampusModel;
 use App\Models\RegistrationLinkModel;
 use App\Models\RepairRequestModel;
 use App\Models\ResetRequestModel;
@@ -17,12 +19,82 @@ final class PublicPortalService
 {
     public function __construct(
         private readonly RegistrationLinkModel $links = new RegistrationLinkModel(),
+        private readonly CampusModel $campuses = new CampusModel(),
         private readonly StudentModel $students = new StudentModel(),
+        private readonly InstitutionalAccountRequestModel $institutionalAccountRequests = new InstitutionalAccountRequestModel(),
         private readonly IdRequestModel $idRequests = new IdRequestModel(),
         private readonly RepairRequestModel $repairs = new RepairRequestModel(),
         private readonly ResetRequestModel $resets = new ResetRequestModel(),
         private readonly StatusLogModel $statusLogs = new StatusLogModel(),
     ) {}
+
+    public function institutionalAccountRequestPage(): array
+    {
+        return ['campuses' => $this->campuses->alphabetical()];
+    }
+
+    public function createInstitutionalAccountRequest(array $data): string
+    {
+        $campusId = (int) $data['campus_id'];
+        if (! $this->campuses->exists($campusId)) {
+            throw new RuntimeException('Choose a valid campus.');
+        }
+
+        $studentNo = trim((string) $data['student_no']);
+        if ($this->institutionalAccountRequests
+            ->where('student_no', $studentNo)
+            ->where('campus_id', $campusId)
+            ->whereIn('status', ['submitted', 'processing'])
+            ->first() !== null) {
+            throw new RuntimeException('An individual institutional account request already exists for this student and campus.');
+        }
+
+        $reference = 'ACC-' . date('ymd') . '-' . strtoupper(bin2hex(random_bytes(3)));
+        $requestId = $this->institutionalAccountRequests->insert([
+            'ref_no' => $reference,
+            'student_no' => $studentNo,
+            'first_name' => trim((string) $data['first_name']),
+            'last_name' => trim((string) $data['last_name']),
+            'middle_name' => trim((string) ($data['middle_name'] ?? '')) ?: null,
+            'campus_id' => $campusId,
+            'program_strand' => trim((string) $data['program_strand']),
+            'year_level' => trim((string) $data['year_level']),
+            'section' => trim((string) $data['section']),
+            'contact_no' => trim((string) $data['contact_no']),
+            'email' => trim((string) ($data['email'] ?? '')) ?: null,
+            'status' => 'submitted',
+        ], true);
+        $this->statusLogs->record('institutional_account_request', (int) $requestId, 'submitted');
+
+        return $reference;
+    }
+
+    public function createReplacementRequest(array $data): string
+    {
+        $studentNo = trim((string) $data['student_no']);
+        $campusId = (int) $data['campus_id'];
+        $student = $this->students->findByStudentNumber($studentNo, $campusId);
+        if ($student === null) {
+            throw new RuntimeException('The student number was not found for the selected campus.');
+        }
+        if ($this->idRequests->where('student_id', $student['id'])
+            ->where('type', 'replacement')
+            ->whereIn('status', ['submitted', 'processing', 'paid', 'verified', 'printed'])
+            ->first() !== null) {
+            throw new RuntimeException('An active Lost-ID replacement request already exists for this student.');
+        }
+
+        $reference = 'IDR-' . date('ymd') . '-' . strtoupper(bin2hex(random_bytes(3)));
+        $requestId = $this->idRequests->insert([
+            'student_id' => $student['id'],
+            'reference_no' => $reference,
+            'type' => 'replacement',
+            'status' => 'submitted',
+        ], true);
+        $this->statusLogs->record('id_request', (int) $requestId, 'submitted');
+
+        return $reference;
+    }
 
     public function registrationPage(string $token): array
     {
@@ -51,6 +123,7 @@ final class PublicPortalService
         $ticket = $this->idRequests->findForTracking($reference); $entityType = 'id_request';
         if ($ticket === null) { $ticket = $this->repairs->findForTracking($reference); $entityType = 'repair_request'; }
         if ($ticket === null) { $ticket = $this->resets->findForTracking($reference); $entityType = 'reset_request'; }
+        if ($ticket === null) { $ticket = $this->institutionalAccountRequests->findForTracking($reference); $entityType = 'institutional_account_request'; }
         return ['ticket' => $ticket, 'history' => $ticket === null ? [] : $this->statusLogs->forEntity($entityType, (int) $ticket['id'])];
     }
 

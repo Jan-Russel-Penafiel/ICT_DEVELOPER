@@ -18,7 +18,7 @@ final class DashboardService
         $students = $map($db->table('students')->select('campus_id, COUNT(*) AS total')->groupBy('campus_id')->get()->getResultArray());
         $requests = $map($db->table('id_requests i')->select('s.campus_id, COUNT(i.id) AS total')->join('students s', 's.id = i.student_id')->groupBy('s.campus_id')->get()->getResultArray());
         $accounts = $map($db->table('accounts a')->select('s.campus_id, COUNT(a.id) AS total')->join('students s', 's.id = a.student_id')->groupBy('s.campus_id')->get()->getResultArray());
-        $campusStats=[]; foreach ($db->table('campuses')->orderBy('name')->get()->getResultArray() as $campus) { $id=(int) $campus['id']; $campusStats[]=['name'=>$campus['name'],'students'=>$students[$id] ?? 0,'requests'=>$requests[$id] ?? 0,'accounts'=>$accounts[$id] ?? 0]; }
+        $campusStats=[]; foreach ($db->table('campuses')->where('code !=', 'SHS')->orderBy('name')->get()->getResultArray() as $campus) { $id=(int) $campus['id']; $campusStats[]=['name'=>$campus['name'],'students'=>$students[$id] ?? 0,'requests'=>$requests[$id] ?? 0,'accounts'=>$accounts[$id] ?? 0]; }
         return compact('counts', 'campusStats');
     }
 

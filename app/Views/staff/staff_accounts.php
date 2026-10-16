@@ -1,10 +1,16 @@
 <?= $this->extend('layouts/base') ?>
 <?= $this->section('content') ?>
+<?php
+$groups = $groups ?? [];
+$campuses = $campuses ?? [];
+$users = $users ?? [];
+?>
 <header class="page-heading">
     <div>
         <h1>Staff accounts</h1>
         <p class="muted">Manage sign-in access, roles, and campus assignments.</p>
     </div>
+    <button type="button" class="button" data-modal-open="create-account">Create staff account</button>
 </header>
 <section class="panel filter-bar" aria-label="Staff account filters">
     <label>Role<select data-table-filter="staff-users-table" data-column="2">

@@ -61,6 +61,11 @@ final class IdController extends BaseController
         return redirect()->to('staff/replacements')->with('success', 'Replacement payment details updated.');
     }
 
+    public function printReplacementReceipt(int $id): string
+    {
+        return view('staff/official_receipt', ['receipt' => $this->ids->replacementReceiptForPrint($id, staff_campus_id())]);
+    }
+
     public function deleteRequest(int $id) { $this->ids->archiveRequest($id, staff_campus_id()); return redirect()->back()->with('success', 'ID request archived.'); }
 
     public function changeStatus(int $id)
@@ -83,7 +88,7 @@ final class IdController extends BaseController
     public function recordReplacement()
     {
         $data = $this->request->getPost();
-        if (! $this->validateData($data, ['student_no'=>'required|max_length[50]','or_number'=>'required|max_length[60]'])) return redirect()->back()->withInput()->with('errors', $this->validator->getErrors());
+        if (! $this->validateData($data, ['student_no'=>'required|max_length[50]'])) return redirect()->back()->withInput()->with('errors', $this->validator->getErrors());
         try { $this->ids->recordReplacement($data, staff_campus_id(), auth()->id()); } catch (RuntimeException $exception) { return redirect()->back()->withInput()->with('error', $exception->getMessage()); }
         return redirect()->to('staff/replacements')->with('success', 'Payment recorded; replacement is now in ICT queue.');
     }

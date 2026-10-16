@@ -8,7 +8,7 @@ final class AccountBatchModel extends BaseIctModel
 {
     protected $table = 'account_batches';
     protected $useSoftDeletes = true;
-    protected $allowedFields = ['campus_id', 'section', 'source_file', 'source_path', 'exported_at', 'created_by'];
+    protected $allowedFields = ['campus_id', 'section', 'source_file', 'source_path', 'exported_at', 'created_by', 'status'];
 
     public function withAccountCounts(): array
     {

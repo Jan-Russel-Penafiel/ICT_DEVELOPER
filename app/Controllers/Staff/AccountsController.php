@@ -63,6 +63,32 @@ final class AccountsController extends BaseController
         return redirect()->to('staff/accounts')->with('success', 'Account batch updated.');
     }
 
+    public function changeBatchStatus(int $id)
+    {
+        try {
+            $this->accountService->changeBatchStatus($id, (string) $this->request->getPost('status'));
+        } catch (RuntimeException $exception) {
+            return redirect()->back()->with('error', $exception->getMessage());
+        } catch (\DomainException $exception) {
+            return redirect()->back()->with('error', $exception->getMessage());
+        }
+
+        return redirect()->to('staff/accounts')->with('success', 'Account batch status updated.');
+    }
+
+    public function changeIndividualStatus(int $id)
+    {
+        try {
+            $this->accountService->changeIndividualStatus($id, (string) $this->request->getPost('status'));
+        } catch (RuntimeException $exception) {
+            return redirect()->back()->with('error', $exception->getMessage());
+        } catch (\DomainException $exception) {
+            return redirect()->back()->with('error', $exception->getMessage());
+        }
+
+        return redirect()->to('staff/accounts')->with('success', 'Individual account status updated.');
+    }
+
     public function deleteBatch(int $id)
     {
         try { $this->accountService->archiveBatch($id); } catch (RuntimeException $exception) { return redirect()->back()->with('error', $exception->getMessage()); }

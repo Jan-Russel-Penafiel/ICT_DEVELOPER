@@ -1,5 +1,9 @@
 <?= $this->extend('layouts/base') ?>
 <?= $this->section('content') ?>
+<?php
+$links = $links ?? [];
+$campuses = $campuses ?? [];
+?>
 <header class="page-heading">
     <div>
         <h1>ID registration links</h1>

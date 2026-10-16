@@ -1,5 +1,9 @@
 <?= $this->extend('layouts/base') ?>
 <?= $this->section('content') ?>
+<?php
+$requests = $requests ?? [];
+$equipment = $equipment ?? [];
+?>
 <header class="page-heading">
     <div>
         <h1>Hardware repair queue</h1>

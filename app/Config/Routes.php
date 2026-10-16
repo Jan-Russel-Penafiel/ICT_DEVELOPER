@@ -16,6 +16,8 @@ $routes->get('track', 'PublicPortal::track');
 $routes->post('track', 'PublicPortal::track');
 $routes->get('reset-request', 'PublicPortal::resetRequest');
 $routes->post('reset-request', 'PublicPortal::storeResetRequest');
+$routes->post('institutional-account-request', 'PublicPortal::storeInstitutionalAccountRequest');
+$routes->post('replacement-request', 'PublicPortal::storeReplacementRequest');
 $routes->get('repair-request', 'PublicPortal::repairRequest');
 $routes->post('repair-request', 'PublicPortal::storeRepairRequest');
 $routes->get('repair-request/(:segment)/print', 'PublicPortal::printRepair/$1');
@@ -34,6 +36,7 @@ $routes->group('staff', ['filter' => 'auth'], static function ($routes) {
     $routes->get('ids/export', 'Staff\IdController::export', ['filter' => 'group:admin,ict']);
     $routes->get('replacements', 'Staff\IdController::replacements', ['filter' => 'group:admin,ict,cashier']);
     $routes->post('replacements', 'Staff\IdController::recordReplacement', ['filter' => 'group:admin,cashier']);
+    $routes->get('replacements/(:num)/receipt', 'Staff\IdController::printReplacementReceipt/$1', ['filter' => 'group:admin,ict,cashier']);
     $routes->post('replacements/(:num)/edit', 'Staff\IdController::updateReplacement/$1', ['filter' => 'group:admin,cashier']);
     $routes->post('replacements/(:num)/delete', 'Staff\IdController::deleteRequest/$1', ['filter' => 'group:admin']);
     $routes->get('accounts', 'Staff\AccountsController::index', ['filter' => 'group:admin,ict']);
@@ -42,6 +45,8 @@ $routes->group('staff', ['filter' => 'auth'], static function ($routes) {
     $routes->get('accounts/(:num)/source', 'Staff\AccountsController::downloadSource/$1', ['filter' => 'group:admin,ict']);
     $routes->get('accounts/(:num)/export', 'Staff\AccountsController::export/$1', ['filter' => 'group:admin,ict']);
     $routes->post('accounts/(:num)/edit', 'Staff\AccountsController::updateBatch/$1', ['filter' => 'group:admin,ict']);
+    $routes->post('accounts/(:num)/status', 'Staff\AccountsController::changeBatchStatus/$1', ['filter' => 'group:admin,ict']);
+    $routes->post('accounts/individual/(:num)/status', 'Staff\AccountsController::changeIndividualStatus/$1', ['filter' => 'group:admin,ict']);
     $routes->post('accounts/(:num)/delete', 'Staff\AccountsController::deleteBatch/$1', ['filter' => 'group:admin']);
     $routes->get('users', 'Staff\StaffAccountsController::index', ['filter' => 'group:admin']);
     $routes->post('users', 'Staff\StaffAccountsController::create', ['filter' => 'group:admin']);

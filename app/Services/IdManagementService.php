@@ -144,6 +144,16 @@ final class IdManagementService
         return ['requests' => $this->requests->accessibleRequests($campusId, false, 'replacement')];
     }
 
+    public function replacementReceiptForPrint(int $id, ?int $campusId): array
+    {
+        $request = $this->findRequest($id, $campusId, 'replacement');
+        if (trim((string) $request['or_number']) === '') {
+            throw new RuntimeException('This replacement does not have an official receipt.');
+        }
+
+        return $request;
+    }
+
     public function recordReplacement(array $data, ?int $campusId, ?int $userId): void
     {
         $student = $this->students->findByStudentNumber(trim((string) $data['student_no']), $campusId);
@@ -152,22 +162,41 @@ final class IdManagementService
         }
 
         $now = date('Y-m-d H:i:s');
+        $orNumber = $this->generateOfficialReceiptNumber();
         $db = db_connect();
         $db->transStart();
-        $id = $this->requests->insert([
-            'student_id' => $student['id'],
-            'reference_no' => 'IDR-' . date('ymd') . '-' . strtoupper(bin2hex(random_bytes(3))),
-            'type' => 'replacement',
-            'status' => 'paid',
-            'or_number' => trim((string) $data['or_number']),
-            'paid_at' => $now,
-        ], true);
-        $this->statusLogs->record('id_request', (int) $id, 'paid', null, $userId);
+        $request = $this->requests->where('student_id', $student['id'])
+            ->where('type', 'replacement')
+            ->whereIn('status', ['submitted', 'processing'])
+            ->first();
+        if ($request !== null) {
+            $id = (int) $request['id'];
+            $this->requests->update($id, [
+                'status' => 'paid',
+                'or_number' => $orNumber,
+                'paid_at' => $now,
+            ]);
+        } else {
+            $id = $this->requests->insert([
+                'student_id' => $student['id'],
+                'reference_no' => 'IDR-' . date('ymd') . '-' . strtoupper(bin2hex(random_bytes(3))),
+                'type' => 'replacement',
+                'status' => 'paid',
+                'or_number' => $orNumber,
+                'paid_at' => $now,
+            ], true);
+        }
+        $this->statusLogs->record('id_request', (int) $id, 'paid', $request['status'] ?? null, $userId);
         $db->transComplete();
 
         if (! $db->transStatus()) {
             throw new RuntimeException('Replacement payment could not be recorded.');
         }
+    }
+
+    private function generateOfficialReceiptNumber(): string
+    {
+        return 'OR-' . date('Ymd') . '-' . strtoupper(bin2hex(random_bytes(4)));
     }
 
     public function productionRows(?int $campusId): array

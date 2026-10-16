@@ -1,6 +1,10 @@
 <?= $this->extend('layouts/base') ?>
 
 <?= $this->section('content') ?>
+<?php
+$ref = $ref ?? '';
+$ticket = $ticket ?? null;
+?>
 <section class="panel public-form-page">
     <h1>Track request</h1>
     <p class="muted">Enter the reference number issued after your submission.</p>

@@ -26,6 +26,7 @@ class Home extends BaseController
         return view('public/id', [
             'title' => 'Submit Request | SKSU-IOMS Service Portal',
             'registrationLinks' => $this->landing->registrationLinks(),
+            'campuses' => $this->portal->institutionalAccountRequestPage()['campuses'],
             'ref' => $ref,
             'ticket' => $ref === '' ? null : $this->portal->trackingData($ref)['ticket'],
             'activeRequest' => (string) $this->request->getGet('request'),

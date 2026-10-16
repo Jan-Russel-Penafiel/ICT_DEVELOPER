@@ -1,4 +1,6 @@
 {
+
+
     "name": "codeigniter4/appstarter",
     "description": "CodeIgniter4 starter app",
     "license": "MIT",
@@ -14,6 +16,7 @@
         "codeigniter4/framework": "^4.7",
         "codeigniter4/shield": "^1.2",
         "endroid/qr-code": "^6.0",
+        "google/apiclient": "^2.20",
         "phpoffice/phpspreadsheet": "^5.0"
     },
     "require-dev": {

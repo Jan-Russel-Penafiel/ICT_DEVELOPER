@@ -1,5 +1,8 @@
 <?= $this->extend('layouts/base') ?>
 <?= $this->section('content') ?>
+<?php
+$requests = $requests ?? [];
+?>
 <header class="page-heading">
     <div>
         <h1>Password reset tickets</h1>

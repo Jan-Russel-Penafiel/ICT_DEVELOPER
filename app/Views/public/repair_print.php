@@ -1,5 +1,6 @@
 <!doctype html>
-<title>Repair request <?= esc($request['request_no']) ?></title>
+<?php $request = $request ?? []; ?>
+<title>Repair request <?= esc($request['request_no'] ?? '') ?></title>
 <style>
     body {
         font: 14px system-ui;
