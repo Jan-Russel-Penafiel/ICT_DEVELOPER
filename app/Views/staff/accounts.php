@@ -4,58 +4,136 @@
 $batches = $batches ?? [];
 $campuses = $campuses ?? [];
 $sectionsByCampus = $sectionsByCampus ?? [];
+$students = $students ?? [];
+$individualAccounts = $individualAccounts ?? [];
 ?>
 <header class="page-heading">
     <div>
         <h1>Institutional accounts</h1>
-        <p class="muted">Manage batch accounts and individual account requests.</p>
+        <p class="muted">Manage batch imports and individual institutional accounts.</p>
     </div>
-    <button type="button" class="button" data-modal-open="import-accounts" data-account-batch-action>Import section list</button>
+    <div class="row-actions">
+        <button type="button" class="button" data-modal-open="create-individual-account" data-account-individual-action>Create individual account</button>
+        <button type="button" class="button" data-modal-open="import-accounts" data-account-batch-action>Import section list</button>
+    </div>
 </header>
-<?php $individualRequests = $individualRequests ?? []; ?>
 <nav class="account-tabs" aria-label="Institutional account views">
     <a href="#batch-accounts" class="account-tab is-active" data-account-tab="batch-accounts">Batch accounts <span><?= count($batches) ?></span></a>
-    <a href="#individual-accounts" class="account-tab" data-account-tab="individual-accounts">Individual accounts <span><?= count($individualRequests) ?></span></a>
+    <a href="#individual-accounts" class="account-tab" data-account-tab="individual-accounts">Individual accounts <span><?= count($individualAccounts) ?></span></a>
 </nav>
-    <section id="individual-accounts" class="account-tab-panel" data-account-panel="individual-accounts" hidden>
-        <?php
-        $individualCampuses = array_values(array_unique(array_column($individualRequests, 'campus')));
-        $individualStatuses = array_values(array_unique(array_column($individualRequests, 'status')));
-        ?>
-        <?= view('components/filter_bar', [
-            'tableId' => 'individual-account-requests-table',
-            'ariaLabel' => 'Individual account request filters',
-            'summary' => 'Matching requests',
-            'count' => count($individualRequests),
-            'filters' => [
-                ['label' => 'Campus', 'column' => 2, 'options' => array_merge([['value' => '', 'label' => 'All campuses']], array_map(static fn ($value) => ['value' => $value, 'label' => $value], $individualCampuses))],
-                ['label' => 'Status', 'column' => 5, 'options' => array_merge([['value' => '', 'label' => 'All statuses']], array_map(static fn ($value) => ['value' => $value, 'label' => ucfirst($value)], $individualStatuses))],
-            ],
-        ]) ?>
-        <section class="table-workspace">
-        <?= view('components/table_toolbar', ['tableId' => 'individual-account-requests-table', 'title' => 'Individual account requests', 'count' => count($individualRequests), 'searchPlaceholder' => 'Search student, program/section, reference...']) ?>
+<section id="individual-accounts" class="account-tab-panel" data-account-panel="individual-accounts" hidden>
+<?php
+$individualCampuses = array_values(array_unique(array_map(static fn ($account) => $account['campus'] ?? 'Unknown', $individualAccounts)));
+?>
+<?= view('components/filter_bar', [
+    'tableId' => 'individual-accounts-table',
+    'ariaLabel' => 'Individual account filters',
+    'summary' => 'Matching accounts',
+    'count' => count($individualAccounts),
+    'filters' => [
+        ['label' => 'Campus', 'column' => 1, 'options' => array_merge([['value' => '', 'label' => 'All campuses']], array_map(static fn ($value) => ['value' => $value, 'label' => $value], $individualCampuses))],
+    ],
+]) ?>
+<section class="table-workspace">
+    <?= view('components/table_toolbar', ['tableId' => 'individual-accounts-table', 'title' => 'Individual account records', 'count' => count($individualAccounts), 'searchPlaceholder' => 'Search student, email, campus...']) ?>
     <div class="table-wrap">
-        <table id="individual-account-requests-table" class="data-table">
-            <thead><tr><th>Reference</th><th>Student</th><th>Campus</th><th>Program / section</th><th>Contact</th><th>Status</th><th>Submitted</th><th>Actions</th></tr></thead>
+        <table id="individual-accounts-table" class="data-table">
+            <thead><tr><th>Student</th><th>Campus</th><th>Email</th><th>Organizational unit</th><th>Created</th><th>Actions</th></tr></thead>
             <tbody>
-                <?php foreach ($individualRequests as $request): ?>
+                <?php foreach ($individualAccounts as $account): ?>
                     <tr>
-                        <td><strong><?= esc($request['ref_no']) ?></strong></td>
-                        <td><?= esc(trim($request['first_name'] . ' ' . ($request['middle_name'] ?? '') . ' ' . $request['last_name'])) ?><br><span class="muted"><?= esc($request['student_no']) ?></span></td>
-                        <td><?= esc($request['campus']) ?></td>
-                        <td><?= esc($request['program_strand']) ?><br><span class="muted"><?= esc($request['year_level']) ?> / <?= esc($request['section']) ?></span></td>
-                        <td><?= esc($request['contact_no']) ?><?php if (! empty($request['email'])): ?><br><span class="muted"><?= esc($request['email']) ?></span><?php endif ?></td>
-                        <td><span class="chip"><?= esc($request['status']) ?></span></td>
-                        <td><?= esc(format_manila_datetime($request['created_at'])) ?></td>
-                        <td><button type="button" class="button small outline" data-modal-open="individual-status-<?= $request['id'] ?>">Status</button></td>
+                        <td><?= esc(trim($account['last_name'] . ', ' . $account['first_name'] . ' ' . ($account['middle_name'] ?? ''))) ?><br><span class="muted"><?= esc($account['student_no']) ?></span></td>
+                        <td><?= esc($account['campus']) ?></td>
+                        <td><?= esc($account['email']) ?></td>
+                        <td><?= esc($account['org_unit']) ?></td>
+                        <td><?= esc(format_manila_datetime($account['created_at'])) ?></td>
+                        <td>
+                            <div class="row-actions">
+                                <button type="button" class="button small outline" data-modal-open="individual-edit-<?= $account['id'] ?>">Edit</button>
+                                <?php if (staff_can('admin')): ?>
+                                    <form method="post" action="<?= site_url('staff/accounts/individual/' . $account['id'] . '/delete') ?>" data-confirm="Archive this individual institutional account?">
+                                        <?= csrf_field() ?>
+                                        <button class="button small danger">Delete</button>
+                                    </form>
+                                <?php endif ?>
+                            </div>
+                        </td>
                     </tr>
                 <?php endforeach ?>
-                <?php if ($individualRequests === []): ?><tr class="empty-row"><td colspan="8">No individual account requests found.</td></tr><?php endif ?>
+                <?php if ($individualAccounts === []): ?><tr class="empty-row"><td colspan="6">No individual accounts created.</td></tr><?php endif ?>
             </tbody>
         </table>
     </div>
 </section>
 </section>
+<?php foreach ($individualAccounts as $account): ?>
+<dialog id="individual-edit-<?= $account['id'] ?>" class="modal">
+    <header class="modal-header">
+        <h2>Edit individual institutional account</h2>
+        <button type="button" class="modal-close" data-modal-close aria-label="Close">&times;</button>
+    </header>
+    <div class="modal-body">
+        <form method="post" class="grid" action="<?= site_url('staff/accounts/individual/' . $account['id'] . '/edit') ?>">
+            <?= csrf_field() ?>
+            <label>Student
+                <input type="text" value="<?= esc(trim($account['last_name'] . ', ' . $account['first_name'] . ' ' . ($account['middle_name'] ?? ''))) ?> (<?= esc($account['student_no']) ?>)" readonly>
+            </label>
+            <label>Email
+                <input type="email" value="<?= esc($account['email']) ?>" readonly>
+            </label>
+            <label>Organizational unit
+                <input name="org_unit" value="<?= esc(old('org_unit', $account['org_unit'])) ?>" maxlength="190" required>
+            </label>
+            <div class="modal-footer full">
+                <button type="button" class="button secondary" data-modal-close>Cancel</button>
+                <button class="button">Save changes</button>
+            </div>
+        </form>
+    </div>
+</dialog>
+<?php endforeach ?>
+<style>
+    [data-account-batch-action][hidden],[data-account-individual-action][hidden]{display:none}
+    .account-tabs{display:flex;gap:4px;margin:0 0 18px;border-bottom:1px solid var(--line)}
+    .account-tab{padding:10px 14px;border-bottom:3px solid transparent;color:var(--muted);font-size:12px;font-weight:800;text-decoration:none}
+    .account-tab:hover,.account-tab:focus-visible{color:var(--forest);outline:0}
+    .account-tab.is-active{border-bottom-color:var(--forest);color:var(--forest-dark)}
+    .account-tab span{display:inline-flex;min-width:20px;justify-content:center;margin-left:4px;padding:2px 6px;border-radius:999px;background:var(--mint);font-size:10px}
+</style>
+
+<dialog id="create-individual-account" class="modal" data-open-on-error>
+    <header class="modal-header">
+        <h2>Create individual institutional account</h2>
+        <button type="button" class="modal-close" data-modal-close aria-label="Close">&times;</button>
+    </header>
+    <div class="modal-body">
+        <form method="post" class="grid" action="<?= site_url('staff/accounts/individual') ?>">
+            <?= csrf_field() ?>
+            <label class="full">Student name
+                <select name="student_id" required>
+                    <option value="">Select a registered student</option>
+                    <?php foreach ($students as $student): ?>
+                        <option value="<?= $student['id'] ?>" <?= old('student_id') == $student['id'] ? 'selected' : '' ?>>
+                            <?= esc(trim($student['last_name'] . ', ' . $student['first_name'] . ' ' . ($student['middle_name'] ?? ''))) ?> (<?= esc($student['student_no']) ?>)
+                        </option>
+                    <?php endforeach ?>
+                </select>
+            </label>
+            <label>Organizational unit
+                <input name="org_unit" value="<?= esc(old('org_unit', '/Students')) ?>" maxlength="190" required>
+            </label>
+            <label>Default password
+                <input type="password" name="default_password" minlength="8" maxlength="255" required autocomplete="new-password">
+            </label>
+            <p class="muted full">The password is placed only in the downloaded CSV and is not stored in the portal.</p>
+            <div class="modal-footer full">
+                <button type="button" class="button secondary" data-modal-close>Cancel</button>
+                <button class="button">Create and download account CSV</button>
+            </div>
+        </form>
+    </div>
+</dialog>
+
 <div id="batch-accounts" class="account-tab-panel" data-account-panel="batch-accounts">
 <?php
 $batchCampuses = array_values(array_unique(array_map(static fn ($batch) => $batch['campus'] ?? 'Unknown', $batches)));
@@ -76,14 +154,6 @@ foreach ($sectionsByCampus as $sections) {
         ['label' => 'Section', 'column' => 2, 'options' => array_merge([['value' => '', 'label' => 'All sections']], array_map(static fn ($value) => ['value' => $value, 'label' => $value], array_values($allSections)))],
     ],
 ]) ?>
-<style>
-    [data-account-batch-action][hidden]{display:none}
-    .account-tabs{display:flex;gap:4px;margin:0 0 18px;border-bottom:1px solid var(--line)}
-    .account-tab{padding:10px 14px;border-bottom:3px solid transparent;color:var(--muted);font-size:12px;font-weight:800;text-decoration:none}
-    .account-tab:hover,.account-tab:focus-visible{color:var(--forest);outline:0}
-    .account-tab.is-active{border-bottom-color:var(--forest);color:var(--forest-dark)}
-    .account-tab span{display:inline-flex;min-width:20px;justify-content:center;margin-left:4px;padding:2px 6px;border-radius:999px;background:var(--mint);font-size:10px}
-</style>
 
 <dialog id="import-accounts" class="modal" data-open-on-error>
     <header class="modal-header">
@@ -112,7 +182,11 @@ foreach ($sectionsByCampus as $sections) {
             <label class="full">Student list (CSV or XLSX)
                 <input type="file" name="file" accept=".csv,.xlsx" required>
             </label>
-            <p class="muted full"><a href="<?= site_url('staff/accounts/import-template') ?>">Download the XLSX template</a> &mdash; include one <code>student_no</code> column for the selected section.</p>
+            <p class="muted full">
+                <a href="<?= site_url('staff/accounts/import-template.csv') ?>">Download the CSV template</a>
+                or <a href="<?= site_url('staff/accounts/import-template') ?>">the XLSX template</a>
+                &mdash; include <code>student_no</code> plus first name, last name, domain extension, default password, and organizational unit columns.
+            </p>
             <div class="modal-footer full">
                 <button type="button" class="button secondary" data-modal-close>Cancel</button>
                 <button class="button">Import section list</button>
@@ -225,35 +299,12 @@ filterAccountSections();
         </div>
     </dialog>
 <?php endforeach ?>
-<?php foreach ($individualRequests as $request): ?>
-    <dialog id="individual-status-<?= $request['id'] ?>" class="modal">
-        <header class="modal-header">
-            <h2>Update individual account status</h2>
-            <button type="button" class="modal-close" data-modal-close aria-label="Close">&times;</button>
-        </header>
-        <div class="modal-body">
-            <form method="post" class="grid" action="<?= site_url('staff/accounts/individual/' . $request['id'] . '/status') ?>">
-                <?= csrf_field() ?>
-                <label class="full">Status
-                    <select name="status" required>
-                        <?php foreach (['processing', 'completed', 'rejected'] as $status): ?>
-                            <option value="<?= $status ?>"><?= esc(ucfirst($status)) ?></option>
-                        <?php endforeach ?>
-                    </select>
-                </label>
-                <div class="modal-footer full">
-                    <button type="button" class="button secondary" data-modal-close>Cancel</button>
-                    <button class="button">Update status</button>
-                </div>
-            </form>
-        </div>
-    </dialog>
-<?php endforeach ?>
 <script>
 (function () {
     const tabs = document.querySelectorAll('[data-account-tab]');
     const panels = document.querySelectorAll('[data-account-panel]');
     const batchActions = document.querySelectorAll('[data-account-batch-action]');
+    const individualActions = document.querySelectorAll('[data-account-individual-action]');
     if (tabs.length === 0 || panels.length === 0) return;
 
     const activateTab = (target, updateHash = true) => {
@@ -266,6 +317,10 @@ filterAccountSections();
         batchActions.forEach((action) => {
             action.hidden = target !== 'batch-accounts';
         });
+        individualActions.forEach((action) => {
+            action.hidden = target !== 'individual-accounts';
+        });
+        localStorage.setItem('ictAccountTab', target);
         if (updateHash) history.replaceState(null, '', '#' + target);
     };
 
@@ -276,7 +331,8 @@ filterAccountSections();
         });
     });
 
-    activateTab(location.hash === '#individual-accounts' ? 'individual-accounts' : 'batch-accounts', false);
+    const initialTab = localStorage.getItem('ictAccountTab') ?? (location.hash === '#individual-accounts' ? 'individual-accounts' : 'batch-accounts');
+    activateTab(initialTab, false);
 })();
 </script>
 <?= $this->endSection() ?>

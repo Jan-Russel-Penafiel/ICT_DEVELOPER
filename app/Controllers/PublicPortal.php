@@ -37,38 +37,6 @@ final class PublicPortal extends BaseController
         return redirect()->to(site_url('id') . '?ref=' . $reference)->with('success', 'Request received. Identity verification is required before a reset. Reference: ' . $reference);
     }
 
-    public function storeInstitutionalAccountRequest()
-    {
-        $data = $this->request->getPost();
-        $rules = [
-            'student_no' => 'required|max_length[50]',
-            'first_name' => 'required|max_length[80]',
-            'last_name' => 'required|max_length[80]',
-            'middle_name' => 'permit_empty|max_length[80]',
-            'campus_id' => 'required|integer',
-            'program_strand' => 'required|max_length[120]',
-            'year_level' => 'required|max_length[30]',
-            'section' => 'required|max_length[50]',
-            'contact_no' => 'required|max_length[30]',
-            'email' => 'permit_empty|valid_email|max_length[160]',
-        ];
-        if (! $this->validateData($data, $rules)) {
-            return redirect()->to(site_url('id') . '?request=institutional-account')
-                ->withInput()
-                ->with('errors', $this->validator->getErrors());
-        }
-        try {
-            $reference = $this->portal->createInstitutionalAccountRequest($data);
-        } catch (RuntimeException $exception) {
-            return redirect()->to(site_url('id') . '?request=institutional-account')
-                ->withInput()
-                ->with('error', $exception->getMessage());
-        }
-
-        return redirect()->to(site_url('id') . '?request=track&ref=' . $reference)
-            ->with('success', 'Institutional account request received. Keep your reference: ' . $reference);
-    }
-
     public function storeReplacementRequest()
     {
         $data = $this->request->getPost();

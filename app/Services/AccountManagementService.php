@@ -7,7 +7,6 @@ namespace App\Services;
 use App\Models\AccountBatchModel;
 use App\Models\AccountModel;
 use App\Models\CampusModel;
-use App\Models\InstitutionalAccountRequestModel;
 use App\Models\SettingModel;
 use App\Models\StudentModel;
 use App\Services\StatusTransitionService;
@@ -26,7 +25,6 @@ final class AccountManagementService
         private readonly CampusModel $campuses = new CampusModel(),
         private readonly StudentModel $students = new StudentModel(),
         private readonly SettingModel $settings = new SettingModel(),
-        private readonly InstitutionalAccountRequestModel $individualRequests = new InstitutionalAccountRequestModel(),
     ) {
     }
 
@@ -34,10 +32,49 @@ final class AccountManagementService
     {
         return [
             'batches' => $this->batches->withAccountCounts(),
-            'individualRequests' => $this->individualRequests->allWithCampus(),
+            'individualAccounts' => $this->accounts->individualWithDetails(),
             'campuses' => $this->campuses->alphabetical(),
             'sectionsByCampus' => $this->students->sectionsByCampus(),
+            'students' => $this->students
+                ->select('id, student_no, first_name, middle_name, last_name, campus_id, section')
+                ->orderBy('last_name')
+                ->orderBy('first_name')
+                ->findAll(),
         ];
+    }
+
+    public function createIndividual(int $studentId, string $orgUnit, string $defaultPassword, ?int $userId): string
+    {
+        $student = $this->students->find($studentId);
+        if (! $student) throw new RuntimeException('Choose a valid student.');
+        if ($orgUnit === '') throw new RuntimeException('Enter an organizational unit.');
+
+        $domain = ltrim((string) ($this->settings->find('email_domain')['value'] ?? ''), '@');
+        if ($domain === '') throw new RuntimeException('Configure the institutional email domain before creating an account.');
+        $email = $this->buildStudentEmail($student, $domain);
+        if ($this->accounts->where('email', $email)->first()) {
+            throw new RuntimeException('This student already has an institutional account.');
+        }
+
+        $db = db_connect();
+        $db->transStart();
+        $this->accounts->insert([
+            'account_batch_id' => null,
+            'student_id' => $studentId,
+            'email' => $email,
+            'org_unit' => $orgUnit,
+        ]);
+        $db->transComplete();
+        if (! $db->transStatus()) throw new RuntimeException('The individual account could not be created.');
+
+        $output = fopen('php://temp', 'r+');
+        fputcsv($output, ['First Name', 'Last Name', 'Email Address', 'Password', 'Org Unit Path', 'Change Password at Next Sign-In']);
+        fputcsv($output, [$student['first_name'], $student['last_name'], $email, $defaultPassword, $orgUnit, 'TRUE']);
+        rewind($output);
+        $csv = (string) stream_get_contents($output);
+        fclose($output);
+
+        return $csv;
     }
 
     public function import(UploadedFile $file, int $campusId, string $section, ?int $userId): int
@@ -75,7 +112,7 @@ final class AccountManagementService
 
         $domain = $this->settings->find('email_domain')['value'] ?? 'example.edu.ph';
         $existingEmails = $this->accounts
-            ->whereIn('email', array_map(static fn (string $studentNo): string => strtolower($studentNo . '@' . ltrim($domain, '@')), array_keys($studentNumbers)))
+            ->whereIn('email', array_map(function (string $studentNo) use ($studentsByNumber, $domain): string { return $this->buildStudentEmail($studentsByNumber[$studentNo], $domain); }, array_keys($studentNumbers)))
             ->findAll();
         if ($existingEmails !== []) throw new RuntimeException('One or more students in this section already have an institutional account.');
 
@@ -85,7 +122,7 @@ final class AccountManagementService
         $added = 0;
         foreach (array_keys($studentNumbers) as $studentNo) {
             $student = $studentsByNumber[$studentNo];
-            $email = strtolower($studentNo . '@' . ltrim($domain, '@'));
+            $email = $this->buildStudentEmail($student, $domain);
             $this->accounts->insert(['account_batch_id' => $batchId, 'student_id' => $student['id'], 'email' => $email, 'org_unit' => '/Students/' . $campusId]);
             $added++;
         }
@@ -95,6 +132,13 @@ final class AccountManagementService
         if (! is_dir($uploadPath)) mkdir($uploadPath, 0775, true);
         $file->move($uploadPath, $sourcePath);
         return $added;
+    }
+
+    private function buildStudentEmail(array $student, string $domain): string
+    {
+        $localPart = strtolower(trim((string) ($student['first_name'] ?? '')) . ' ' . trim((string) ($student['last_name'] ?? '')));
+        $localPart = str_replace(['.', ' '], '', $localPart);
+        return strtolower($localPart . '@' . $domain);
     }
 
     /** @param array<int|string, mixed> $headers */
@@ -139,7 +183,7 @@ final class AccountManagementService
         $worksheet = $spreadsheet->getActiveSheet();
         $worksheet->setTitle('Account roster');
         $worksheet->fromArray([
-            ['student_no'],
+            ['student_no', 'First Name', 'Last Name', 'Domain Extension', 'Default Password', 'Organizational Unit'],
             ['2026-00001'],
             ['2026-00002'],
             ['2026-00003'],
@@ -153,6 +197,20 @@ final class AccountManagementService
         $writer->save('php://output');
         $contents = (string) ob_get_clean();
         $spreadsheet->disconnectWorksheets();
+
+        return $contents;
+    }
+
+    public function importCsvTemplate(): string
+    {
+        $output = fopen('php://temp', 'r+');
+        fputcsv($output, ['student_no', 'First Name', 'Last Name', 'Domain Extension', 'Default Password', 'Organizational Unit']);
+        fputcsv($output, ['2026-00001']);
+        fputcsv($output, ['2026-00002']);
+        fputcsv($output, ['2026-00003']);
+        rewind($output);
+        $contents = (string) stream_get_contents($output);
+        fclose($output);
 
         return $contents;
     }
@@ -176,6 +234,27 @@ final class AccountManagementService
         $this->batches->update($id, ['campus_id' => (int) $data['campus_id'], 'section' => $section]);
     }
 
+    public function updateIndividual(int $id, array $data): void
+    {
+        $account = $this->accounts->findIndividual($id);
+        if (! $account) throw PageNotFoundException::forPageNotFound();
+
+        $orgUnit = trim((string) ($data['org_unit'] ?? ''));
+        if ($orgUnit === '') throw new RuntimeException('Enter an organizational unit.');
+
+        $this->accounts->update($id, ['org_unit' => $orgUnit]);
+    }
+
+    public function archiveIndividual(int $id): void
+    {
+        $account = $this->accounts->findIndividual($id);
+        if (! $account) throw PageNotFoundException::forPageNotFound();
+
+        if (! $this->accounts->delete($id)) {
+            throw new RuntimeException('The individual account could not be archived.');
+        }
+    }
+
     public function changeBatchStatus(int $id, string $status): void
     {
         if (! $this->batches->find($id)) throw PageNotFoundException::forPageNotFound();
@@ -186,19 +265,6 @@ final class AccountManagementService
             $status,
             ['active', 'inactive'],
             'account_batch',
-        );
-    }
-
-    public function changeIndividualStatus(int $id, string $status): void
-    {
-        if (! $this->individualRequests->find($id)) throw PageNotFoundException::forPageNotFound();
-
-        (new StatusTransitionService(db_connect()))->transition(
-            'institutional_account_requests',
-            $id,
-            $status,
-            ['processing', 'completed', 'rejected'],
-            'institutional_account_request',
         );
     }
 

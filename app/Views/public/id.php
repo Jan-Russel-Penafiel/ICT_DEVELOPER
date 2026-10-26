@@ -17,7 +17,6 @@ $requestChoices = [
     'id' => 'Campus ID registration',
     'repair' => 'Hardware repair request',
     'reset' => 'Password reset request',
-    'institutional-account' => 'Individual institutional account',
     'replacement' => 'Lost-ID replacement request',
     'track' => 'Request tracking',
 ];
@@ -110,53 +109,6 @@ if (! array_key_exists($selectedRequest, $requestChoices)) {
                 </label>
                 <div class="full form-actions">
                     <button class="button" type="submit">Request reset</button>
-                </div>
-            </form>
-        </div>
-
-        <div class="send-request-panel" data-request-panel="institutional-account" <?= $selectedRequest === 'institutional-account' ? '' : 'hidden' ?>>
-            <h2>Individual institutional account</h2>
-            <p class="muted">Submit your details so ICT can review and create your institutional account.</p>
-            <form method="post" action="<?= site_url('institutional-account-request') ?>" class="grid inline-request-form">
-                <?= csrf_field() ?>
-                <input type="hidden" name="form_type" value="institutional-account">
-                <label>Student number
-                    <input name="student_no" value="<?= esc(old('student_no')) ?>" required>
-                </label>
-                <label>Campus
-                    <select name="campus_id" required>
-                        <option value="">Select campus</option>
-                        <?php foreach (($campuses ?? []) as $campus): ?>
-                            <option value="<?= $campus['id'] ?>" <?= (string) old('campus_id') === (string) $campus['id'] ? 'selected' : '' ?>><?= esc($campus['name']) ?></option>
-                        <?php endforeach ?>
-                    </select>
-                </label>
-                <label>First name
-                    <input name="first_name" value="<?= esc(old('first_name')) ?>" autocomplete="given-name" required>
-                </label>
-                <label>Last name
-                    <input name="last_name" value="<?= esc(old('last_name')) ?>" autocomplete="family-name" required>
-                </label>
-                <label>Middle name <span class="field-optional">Optional</span>
-                    <input name="middle_name" value="<?= esc(old('middle_name')) ?>" autocomplete="additional-name">
-                </label>
-                <label>Program / strand
-                    <input name="program_strand" value="<?= esc(old('program_strand')) ?>" required>
-                </label>
-                <label>Year level
-                    <input name="year_level" value="<?= esc(old('year_level')) ?>" required>
-                </label>
-                <label>Section
-                    <input name="section" value="<?= esc(old('section')) ?>" required>
-                </label>
-                <label>Contact number
-                    <input name="contact_no" value="<?= esc(old('contact_no')) ?>" autocomplete="tel" required>
-                </label>
-                <label>Email address <span class="field-optional">Optional</span>
-                    <input type="email" name="email" value="<?= esc(old('email')) ?>" autocomplete="email">
-                </label>
-                <div class="full form-actions">
-                    <button class="button" type="submit">Submit account request</button>
                 </div>
             </form>
         </div>

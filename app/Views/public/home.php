@@ -104,9 +104,8 @@
         <a class="landing-service" href="<?= site_url('id') ?>"><span class="landing-service-number">01</span><h3>Campus ID</h3><p>Register for an available Campus ID cycle published by your Registrar.</p><span>View registration links &rarr;</span></a>
         <a class="landing-service" href="<?= site_url('id') ?>?request=repair"><span class="landing-service-number">02</span><h3>Hardware repair</h3><p>Report an issue with university equipment and receive a service reference.</p><span>Submit repair request &rarr;</span></a>
         <a class="landing-service" href="<?= site_url('id') ?>?request=reset"><span class="landing-service-number">03</span><h3>Password reset</h3><p>Request account assistance. Identity verification is completed before access is reset.</p><span>Request a reset &rarr;</span></a>
-        <a class="landing-service" href="<?= site_url('id') ?>?request=institutional-account"><span class="landing-service-number">04</span><h3>Institutional account</h3><p>Request an institutional account individually and receive a reference for follow-up.</p><span>Submit account request &rarr;</span></a>
-        <a class="landing-service" href="<?= site_url('id') ?>?request=replacement"><span class="landing-service-number">05</span><h3>Lost-ID replacement</h3><p>Request a replacement for a lost Campus ID and receive a reference for follow-up.</p><span>Request replacement &rarr;</span></a>
-        <a class="landing-service" href="<?= site_url('id') ?>?request=track"><span class="landing-service-number">06</span><h3>Request tracking</h3><p>Check the latest status of your Campus ID, repair, reset, account, or replacement request.</p><span>Check status &rarr;</span></a>
+        <a class="landing-service" href="<?= site_url('id') ?>?request=replacement"><span class="landing-service-number">04</span><h3>Lost-ID replacement</h3><p>Request a replacement for a lost Campus ID and receive a reference for follow-up.</p><span>Request replacement &rarr;</span></a>
+        <a class="landing-service" href="<?= site_url('id') ?>?request=track"><span class="landing-service-number">05</span><h3>Request tracking</h3><p>Check the latest status of your Campus ID, repair, reset, or replacement request.</p><span>Check status &rarr;</span></a>
     </section>
 
     <section class="landing-section landing-steps">

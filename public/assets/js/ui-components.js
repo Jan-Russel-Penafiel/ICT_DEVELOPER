@@ -7,7 +7,7 @@
             toast: true,
             position: 'bottom-end',
             showConfirmButton: false,
-            timer: 2000,
+            timer: 100000,
             timerProgressBar: true,
             customClass: { popup: 'ict-toast' },
         }) : Promise.resolve();

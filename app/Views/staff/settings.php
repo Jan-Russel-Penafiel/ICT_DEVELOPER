@@ -40,7 +40,7 @@
         <h2>Edit settings</h2><button type="button" class="modal-close" data-modal-close aria-label="Close">×</button>
     </header>
     <div class="modal-body">
-        <form method="post" class="grid"><?= csrf_field() ?><label>Replacement fee<input type="number" step=".01" name="replacement_fee" value="<?= esc($settings['replacement_fee'] ?? '100') ?>" required></label><label>Release offset (months)<input type="number" name="release_offset_months" value="<?= esc($settings['release_offset_months'] ?? '1') ?>" required></label><label class="full">Email domain<input name="email_domain" value="<?= esc($settings['email_domain'] ?? '') ?>" placeholder="school.edu.ph" required></label>
+        <form method="post" class="grid"><?= csrf_field() ?><label>Replacement fee<input type="number" step=".01" name="replacement_fee" value="<?= esc($settings['replacement_fee'] ?? '100') ?>" required></label><label>Release offset (months)<input type="number" name="release_offset_months" value="<?= esc($settings['release_offset_months'] ?? '1') ?>" required></label><label class="full">Email domain<input name="email_domain" value="<?= esc($settings['email_domain'] ?? 'sksu.edu.ph') ?>" placeholder="sksu.edu.ph" required></label>
             <div class="modal-footer full"><button type="button" class="button secondary" data-modal-close>Cancel</button><button class="button">Save settings</button></div>
         </form>
     </div>

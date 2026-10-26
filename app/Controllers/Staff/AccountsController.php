@@ -20,6 +20,63 @@ final class AccountsController extends BaseController
 
     public function index(): string { return view('staff/accounts', $this->accountService->indexData()); }
 
+    public function createIndividual()
+    {
+        $data = $this->request->getPost();
+        $rules = [
+            'student_id' => 'required|integer',
+            'org_unit' => 'required|max_length[190]',
+            'default_password' => 'required|min_length[8]|max_length[255]',
+        ];
+        if (! $this->validateData($data, $rules)) {
+            return redirect()->back()->withInput()->with('errors', $this->validator->getErrors())->with('open_modal', 'create-individual-account');
+        }
+
+        try {
+            $csv = $this->accountService->createIndividual(
+                (int) $data['student_id'],
+                trim((string) $data['org_unit']),
+                (string) $data['default_password'],
+                auth()->id(),
+            );
+        } catch (RuntimeException $exception) {
+            return redirect()->back()->withInput()->with('error', $exception->getMessage())->with('open_modal', 'create-individual-account');
+        }
+
+        return $this->response
+            ->setHeader('Content-Type', 'text/csv')
+            ->setHeader('Content-Disposition', 'attachment; filename="institutional-account.csv"')
+            ->setBody($csv);
+    }
+
+    public function updateIndividual(int $id)
+    {
+        $data = $this->request->getPost();
+        if (! $this->validateData($data, ['org_unit' => 'required|max_length[190]'])) {
+            return redirect()->back()->withInput()->with('errors', $this->validator->getErrors())->with('open_modal', 'individual-edit-' . $id);
+        }
+        try {
+            $this->accountService->updateIndividual($id, $data);
+        } catch (RuntimeException $exception) {
+            return redirect()->back()->with('error', $exception->getMessage())->with('open_modal', 'individual-edit-' . $id);
+        } catch (PageNotFoundException $exception) {
+            return redirect()->to('staff/accounts')->with('error', 'Individual account not found.');
+        }
+        return redirect()->to('staff/accounts')->with('success', 'Individual account updated.');
+    }
+
+    public function deleteIndividual(int $id)
+    {
+        try {
+            $this->accountService->archiveIndividual($id);
+        } catch (RuntimeException $exception) {
+            return redirect()->back()->with('error', $exception->getMessage());
+        } catch (PageNotFoundException $exception) {
+            return redirect()->back()->with('error', 'Individual account not found.');
+        }
+        return redirect()->to('staff/accounts')->with('success', 'Individual account archived.');
+    }
+
     public function import()
     {
         $file = $this->request->getFile('file');
@@ -44,6 +101,14 @@ final class AccountsController extends BaseController
             ->setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
             ->setHeader('Content-Disposition', 'attachment; filename="institutional-account-import-template.xlsx"')
             ->setBody($this->accountService->importTemplate());
+    }
+
+    public function downloadCsvTemplate()
+    {
+        return $this->response
+            ->setHeader('Content-Type', 'text/csv; charset=UTF-8')
+            ->setHeader('Content-Disposition', 'attachment; filename="institutional-account-import-template.csv"')
+            ->setBody($this->accountService->importCsvTemplate());
     }
 
     public function downloadSource(int $id)
@@ -74,19 +139,6 @@ final class AccountsController extends BaseController
         }
 
         return redirect()->to('staff/accounts')->with('success', 'Account batch status updated.');
-    }
-
-    public function changeIndividualStatus(int $id)
-    {
-        try {
-            $this->accountService->changeIndividualStatus($id, (string) $this->request->getPost('status'));
-        } catch (RuntimeException $exception) {
-            return redirect()->back()->with('error', $exception->getMessage());
-        } catch (\DomainException $exception) {
-            return redirect()->back()->with('error', $exception->getMessage());
-        }
-
-        return redirect()->to('staff/accounts')->with('success', 'Individual account status updated.');
     }
 
     public function deleteBatch(int $id)

@@ -17,6 +17,21 @@ final class AccountModel extends BaseIctModel
             ->findAll();
     }
 
+    public function individualWithDetails(): array
+    {
+        return $this->select('accounts.*, students.student_no, students.first_name, students.middle_name, students.last_name, campuses.name campus')
+            ->join('students', 'students.id = accounts.student_id')
+            ->join('campuses', 'campuses.id = students.campus_id')
+            ->where('accounts.account_batch_id IS NULL', null, false)
+            ->orderBy('accounts.created_at', 'DESC')
+            ->findAll();
+    }
+
+    public function findIndividual(int $id): ?array
+    {
+        return $this->where('id', $id)->where('account_batch_id IS NULL', null, false)->first();
+    }
+
     public function deleteForBatch(int $batchId): bool
     {
         return (bool) $this->where('account_batch_id', $batchId)->delete();
