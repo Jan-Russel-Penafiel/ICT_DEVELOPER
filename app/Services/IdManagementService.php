@@ -33,7 +33,16 @@ final class IdManagementService
 
     public function linksData(): array
     {
-        return ['campuses' => $this->campuses->alphabetical(), 'links' => $this->links->newestWithCampus()];
+        $links = $this->links->newestWithCampus();
+        foreach ($links as &$link) {
+            $link['status'] = (! empty($link['is_active']) && time() <= strtotime((string) $link['closes_at'])) ? 'Active' : 'Inactive';
+            if (time() > strtotime((string) $link['closes_at'])) {
+                $link['is_active'] = 0;
+            }
+        }
+        unset($link);
+
+        return ['campuses' => $this->campuses->alphabetical(), 'links' => $links];
     }
 
     public function createLink(array $data, ?int $userId): void
@@ -242,9 +251,14 @@ final class IdManagementService
             throw new RuntimeException('Closing time must be after opening time.');
         }
 
+        $schoolYear = trim((string) $data['school_year']);
+        if (preg_match('/^\\d{4}$/', $schoolYear) === 1) {
+            $schoolYear .= ' - ' . ((int) $schoolYear + 1);
+        }
+
         return [
             'campus_id' => (int) $data['campus_id'],
-            'school_year' => trim((string) $data['school_year']),
+            'school_year' => $schoolYear,
             'opens_at' => date('Y-m-d H:i:s', $opensAt),
             'closes_at' => date('Y-m-d H:i:s', $closesAt),
             'release_date' => (string) $data['release_date'],

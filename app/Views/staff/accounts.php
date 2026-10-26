@@ -18,42 +18,22 @@ $sectionsByCampus = $sectionsByCampus ?? [];
     <a href="#individual-accounts" class="account-tab" data-account-tab="individual-accounts">Individual accounts <span><?= count($individualRequests) ?></span></a>
 </nav>
     <section id="individual-accounts" class="account-tab-panel" data-account-panel="individual-accounts" hidden>
-        <section class="panel filter-bar" aria-label="Individual account request filters">
-            <label>Campus
-                <select data-table-filter="individual-account-requests-table" data-column="2">
-                    <option value="">All campuses</option>
-                    <?php $individualCampuses = []; foreach ($individualRequests as $request) { $individualCampuses[$request['campus']] = $request['campus']; } ?>
-                    <?php foreach (array_keys($individualCampuses) as $campus): ?>
-                        <option value="<?= esc($campus) ?>"><?= esc($campus) ?></option>
-                    <?php endforeach ?>
-                </select>
-            </label>
-            <label>Status
-                <select data-table-filter="individual-account-requests-table" data-column="5">
-                    <option value="">All statuses</option>
-                    <?php $individualStatuses = []; foreach ($individualRequests as $request) { $individualStatuses[$request['status']] = $request['status']; } ?>
-                    <?php foreach (array_keys($individualStatuses) as $status): ?>
-                        <option value="<?= esc($status) ?>"><?= esc(ucfirst($status)) ?></option>
-                    <?php endforeach ?>
-                </select>
-            </label>
-            <div class="filter-summary">
-                <span class="filter-summary-label">Matching requests</span>
-                <strong data-filter-count="individual-account-requests-table"><?= count($individualRequests) ?> shown</strong>
-            </div>
-            <div class="filter-actions">
-                <button type="button" class="button" data-apply-filters="individual-account-requests-table">Filter</button>
-                <button type="button" class="button secondary" data-reset-filters="individual-account-requests-table">Reset</button>
-            </div>
-        </section>
+        <?php
+        $individualCampuses = array_values(array_unique(array_column($individualRequests, 'campus')));
+        $individualStatuses = array_values(array_unique(array_column($individualRequests, 'status')));
+        ?>
+        <?= view('components/filter_bar', [
+            'tableId' => 'individual-account-requests-table',
+            'ariaLabel' => 'Individual account request filters',
+            'summary' => 'Matching requests',
+            'count' => count($individualRequests),
+            'filters' => [
+                ['label' => 'Campus', 'column' => 2, 'options' => array_merge([['value' => '', 'label' => 'All campuses']], array_map(static fn ($value) => ['value' => $value, 'label' => $value], $individualCampuses))],
+                ['label' => 'Status', 'column' => 5, 'options' => array_merge([['value' => '', 'label' => 'All statuses']], array_map(static fn ($value) => ['value' => $value, 'label' => ucfirst($value)], $individualStatuses))],
+            ],
+        ]) ?>
         <section class="table-workspace">
-        <header class="table-toolbar">
-            <div class="table-title">
-                <h2>Individual account requests</h2>
-                <span class="table-count" data-table-count="individual-account-requests-table"><?= count($individualRequests) ?> shown</span>
-            </div>
-            <div class="table-tools"><input class="table-search" type="search" data-table-search="individual-account-requests-table" placeholder="Search student, program/section, reference..."></div>
-    </header>
+        <?= view('components/table_toolbar', ['tableId' => 'individual-account-requests-table', 'title' => 'Individual account requests', 'count' => count($individualRequests), 'searchPlaceholder' => 'Search student, program/section, reference...']) ?>
     <div class="table-wrap">
         <table id="individual-account-requests-table" class="data-table">
             <thead><tr><th>Reference</th><th>Student</th><th>Campus</th><th>Program / section</th><th>Contact</th><th>Status</th><th>Submitted</th><th>Actions</th></tr></thead>
@@ -77,12 +57,25 @@ $sectionsByCampus = $sectionsByCampus ?? [];
 </section>
 </section>
 <div id="batch-accounts" class="account-tab-panel" data-account-panel="batch-accounts">
-<section class="panel filter-bar" aria-label="Institutional account filters">
-    <label>Campus<select data-table-filter="account-batches-table" data-column="0"><option value="">All campuses</option><?php foreach ($batches as $batch): ?><option value="<?= esc($batch['campus'] ?? 'Unknown') ?>"><?= esc($batch['campus'] ?? 'Unknown') ?></option><?php endforeach ?></select></label>
-    <label>Section<select data-table-filter="account-batches-table" data-column="2"><option value="">All sections</option><?php $allSections = []; foreach ($sectionsByCampus as $campusId => $sections) { foreach ($sections as $section) { $allSections[$section] = $section; } } ?><?php foreach (array_unique($allSections) as $section): ?><option value="<?= esc($section) ?>"><?= esc($section) ?></option><?php endforeach ?></select></label>
-    <div class="filter-summary"><span class="filter-summary-label">Matching batches</span><strong data-filter-count="account-batches-table"><?= count($batches) ?> shown</strong></div>
-    <div class="filter-actions"><button type="button" class="button" data-apply-filters="account-batches-table">Filter</button><button type="button" class="button secondary" data-reset-filters="account-batches-table">Reset</button></div>
-</section>
+<?php
+$batchCampuses = array_values(array_unique(array_map(static fn ($batch) => $batch['campus'] ?? 'Unknown', $batches)));
+$allSections = [];
+foreach ($sectionsByCampus as $sections) {
+    foreach ($sections as $section) {
+        $allSections[$section] = $section;
+    }
+}
+?>
+<?= view('components/filter_bar', [
+    'tableId' => 'account-batches-table',
+    'ariaLabel' => 'Institutional account filters',
+    'summary' => 'Matching batches',
+    'count' => count($batches),
+    'filters' => [
+        ['label' => 'Campus', 'column' => 0, 'options' => array_merge([['value' => '', 'label' => 'All campuses']], array_map(static fn ($value) => ['value' => $value, 'label' => $value], $batchCampuses))],
+        ['label' => 'Section', 'column' => 2, 'options' => array_merge([['value' => '', 'label' => 'All sections']], array_map(static fn ($value) => ['value' => $value, 'label' => $value], array_values($allSections)))],
+    ],
+]) ?>
 <style>
     [data-account-batch-action][hidden]{display:none}
     .account-tabs{display:flex;gap:4px;margin:0 0 18px;border-bottom:1px solid var(--line)}
@@ -150,13 +143,7 @@ filterAccountSections();
 </script>
 
 <section class="table-workspace">
-    <header class="table-toolbar">
-        <div class="table-title">
-            <h2>Account batches</h2>
-            <span class="table-count" data-table-count="account-batches-table"><?= count($batches) ?> shown</span>
-        </div>
-        <div class="table-tools"><input class="table-search" type="search" data-table-search="account-batches-table" placeholder="Search batches"></div>
-    </header>
+    <?= view('components/table_toolbar', ['tableId' => 'account-batches-table', 'title' => 'Account batches', 'count' => count($batches), 'searchPlaceholder' => 'Search batches']) ?>
     <div class="table-wrap">
         <table id="account-batches-table" class="data-table">
             <thead><tr><th>Campus</th><th>Source file</th><th>Section</th><th>Accounts</th><th>Status</th><th>Actions</th></tr></thead>

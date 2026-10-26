@@ -24,10 +24,22 @@ final class RegistrationLinkModel extends BaseIctModel
 
     public function newestWithCampus(): array
     {
-        return $this->select('registration_links.*, campuses.name campus')
+        $links = $this->select('registration_links.*, campuses.name campus')
             ->join('campuses', 'campuses.id = registration_links.campus_id')
             ->orderBy('registration_links.created_at', 'DESC')
             ->findAll();
+
+        $now = date('Y-m-d H:i:s');
+        foreach ($links as &$link) {
+            if (! empty($link['is_active']) && isset($link['closes_at']) && (string) $link['closes_at'] < $now) {
+                $link['is_active'] = 0;
+            }
+
+            $link['status'] = (! empty($link['is_active']) && isset($link['closes_at']) && (string) $link['closes_at'] >= $now) ? 'Active' : 'Inactive';
+        }
+        unset($link);
+
+        return $links;
     }
 
     public function findWithCampusByToken(string $token): ?array

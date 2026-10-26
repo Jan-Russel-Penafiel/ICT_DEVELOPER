@@ -10,28 +10,18 @@ $equipment = $equipment ?? [];
         <p class="muted">Track assessment, external service, and equipment release.</p>
     </div>
 </header>
-<section class="panel filter-bar" aria-label="Hardware repair queue filters">
-    <label>Status<select data-table-filter="repair-requests-table" data-column="3">
-            <option value="">All statuses</option>
-            <option>assessed</option>
-            <option>sent</option>
-            <option>returned</option>
-            <option>released</option>
-            <option>rejected</option>
-        </select></label>
-    <label>Office<select data-table-filter="repair-requests-table" data-column="2">
-            <option value="">All offices</option><?php foreach ($equipment as $item): ?><option value="<?= esc($item['equipment']) ?>"><?= esc($item['equipment']) ?></option><?php endforeach ?>
-        </select></label>
-    <div class="filter-summary"><span class="filter-summary-label">Matching repairs</span><strong data-filter-count="repair-requests-table"><?= count($requests) ?> shown</strong></div>
-    <div class="filter-actions"><button type="button" class="button" data-apply-filters="repair-requests-table">Filter</button><button type="button" class="button secondary" data-reset-filters="repair-requests-table">Reset</button></div>
-</section>
+<?= view('components/filter_bar', [
+    'tableId' => 'repair-requests-table',
+    'ariaLabel' => 'Hardware repair queue filters',
+    'summary' => 'Matching repairs',
+    'count' => count($requests),
+    'filters' => [
+        ['label' => 'Status', 'column' => 3, 'options' => array_merge([['value' => '', 'label' => 'All statuses']], array_map(static fn ($value) => ['value' => $value, 'label' => $value], ['assessed', 'sent', 'returned', 'released', 'rejected']))],
+        ['label' => 'Office', 'column' => 2, 'options' => array_merge([['value' => '', 'label' => 'All offices']], array_map(static fn ($item) => ['value' => $item['equipment'], 'label' => $item['equipment']], $equipment))],
+    ],
+]) ?>
 <section class="table-workspace">
-    <header class="table-toolbar">
-        <div class="table-title">
-            <h2>Repair requests</h2><span class="table-count" data-table-count="repair-requests-table"><?= count($requests) ?> shown</span>
-        </div>
-        <div class="table-tools"><input class="table-search" type="search" data-table-search="repair-requests-table" placeholder="Search repairs"></div>
-    </header>
+    <?= view('components/table_toolbar', ['tableId' => 'repair-requests-table', 'title' => 'Repair requests', 'count' => count($requests), 'searchPlaceholder' => 'Search repairs']) ?>
     <div class="table-wrap">
         <table id="repair-requests-table" class="data-table">
             <thead>

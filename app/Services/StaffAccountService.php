@@ -70,6 +70,15 @@ final class StaffAccountService
     public function update(int $id, array $data): void
     {
         $user = $this->findUser($id);
+        if ($id === (int) (auth()->id() ?? 0)) {
+            $currentGroups = $user->getGroups() ?? [];
+            if (! in_array($data['group'], $currentGroups, true)) {
+                throw new RuntimeException('Use a separate administrator account to change your own access.');
+            }
+            if ((bool) (int) $data['active'] !== (bool) $user->active) {
+                throw new RuntimeException('Use a separate administrator account to change your own access.');
+            }
+        }
         $this->assertUniqueCredentials($id, $data['username'], $data['email']);
         $campusId = $this->campusAssignment($data['group'], $data['campus_id']);
         if ($data['password'] !== '') {

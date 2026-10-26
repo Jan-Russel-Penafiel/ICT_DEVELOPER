@@ -8,22 +8,25 @@ final class StaffProfileModel extends BaseIctModel
 {
     protected $table = 'staff_profiles';
     protected $useSoftDeletes = true;
-    protected $allowedFields = ['user_id', 'campus_id'];
+    protected $allowedFields = ['user_id', 'campus_id', 'deleted_at'];
 
     public function replaceCampusAssignment(int $userId, ?int $campusId): void
     {
-        $profile = $this->where('user_id', $userId)->first();
+        $profile = $this->withDeleted()->where('user_id', $userId)->first();
 
         if ($campusId === null) {
+            // "No campus restriction" means access to all campuses.
+            // Keep the profile row with a null campus_id so the account
+            // list resolves to "All campuses" instead of a stale value.
             if ($profile !== null) {
-                $this->delete((int) $profile['id']);
+                $this->withDeleted()->update((int) $profile['id'], ['campus_id' => null, 'deleted_at' => null]);
             }
 
             return;
         }
 
         if ($profile !== null) {
-            $this->update((int) $profile['id'], ['campus_id' => $campusId]);
+            $this->withDeleted()->update((int) $profile['id'], ['campus_id' => $campusId, 'deleted_at' => null]);
             return;
         }
 

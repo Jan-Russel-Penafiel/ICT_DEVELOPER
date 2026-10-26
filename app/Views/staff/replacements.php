@@ -9,16 +9,13 @@ $requests = $requests ?? [];
         <p class="muted">Record payments and manage replacement requests.</p>
     </div><?php if (staff_can('admin', 'cashier')): ?><button type="button" class="button" data-modal-open="record-payment">Record payment</button><?php endif ?>
 </header>
-<section class="panel filter-bar" aria-label="Replacement request filters">
-    <label>Status<select data-table-filter="replacements-table" data-column="3">
-            <option value="">All statuses</option>
-            <option>Active</option>
-            <option>Completed</option>
-            <option>Cancelled</option>
-        </select></label>
-    <div class="filter-summary"><span class="filter-summary-label">Matching requests</span><strong data-filter-count="replacements-table"><?= count($requests) ?> shown</strong></div>
-    <div class="filter-actions"><button type="button" class="button" data-apply-filters="replacements-table">Filter</button><button type="button" class="button secondary" data-reset-filters="replacements-table">Reset</button></div>
-</section>
+<?= view('components/filter_bar', [
+    'tableId' => 'replacements-table',
+    'ariaLabel' => 'Replacement request filters',
+    'summary' => 'Matching requests',
+    'count' => count($requests),
+    'filters' => [['label' => 'Status', 'column' => 3, 'options' => array_merge([['value' => '', 'label' => 'All statuses']], array_map(static fn ($value) => ['value' => $value, 'label' => $value], ['Active', 'Completed', 'Cancelled']))]],
+]) ?>
 <?php if (staff_can('admin', 'cashier')): ?><dialog id="record-payment" class="modal" data-open-on-error>
         <header class="modal-header">
             <h2>Record replacement payment</h2><button type="button" class="modal-close" data-modal-close>×</button>
@@ -31,12 +28,7 @@ $requests = $requests ?? [];
         </div>
     </dialog><?php endif ?>
 <section class="table-workspace">
-    <header class="table-toolbar">
-        <div class="table-title">
-            <h2>Replacement requests</h2><span class="table-count" data-table-count="replacements-table"><?= count($requests) ?> shown</span>
-        </div>
-        <div class="table-tools"><input class="table-search" type="search" data-table-search="replacements-table" placeholder="Search replacement requests"></div>
-    </header>
+    <?= view('components/table_toolbar', ['tableId' => 'replacements-table', 'title' => 'Replacement requests', 'count' => count($requests), 'searchPlaceholder' => 'Search replacement requests']) ?>
     <div class="table-wrap">
         <table id="replacements-table" class="data-table">
             <thead>

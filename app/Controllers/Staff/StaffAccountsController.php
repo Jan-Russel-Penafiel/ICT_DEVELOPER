@@ -24,7 +24,6 @@ final class StaffAccountsController extends BaseController
 
     public function update(int $id)
     {
-        if ($id === (int) auth()->id()) return redirect()->back()->with('error', 'Use a separate administrator account to change your own access.');
         $data = $this->accountData();
         if (! $this->validateData($data, $this->rules(false), [], config('Auth')->DBGroup)) return redirect()->back()->withInput()->with('errors', $this->validator->getErrors())->with('open_modal', 'user-edit-' . $id);
         try { $this->accounts->update($id, $data); } catch (RuntimeException $exception) { return redirect()->back()->withInput()->with('error', $exception->getMessage())->with('open_modal', 'user-edit-' . $id); }
@@ -49,7 +48,7 @@ final class StaffAccountsController extends BaseController
         return [
             'username' => $creating ? ['rules'=>['required','min_length[3]','max_length[30]','regex_match[/\\A[a-zA-Z0-9\\.]+\\z/]','is_unique[' . $tables['users'] . '.username]']] : 'required|min_length[3]|max_length[30]|regex_match[/\\A[a-zA-Z0-9\\.]+\\z/]',
             'email' => $creating ? ['rules'=>['required','max_length[254]','valid_email','is_unique[' . $tables['identities'] . '.secret]']] : 'required|max_length[254]|valid_email',
-            'password' => $creating ? ['rules'=>['required', Passwords::getMaxLengthRule()]] : 'permit_empty|' . Passwords::getMaxLengthRule(),
+            'password' => $creating ? ['rules'=>['required', 'min_length[8]', Passwords::getMaxLengthRule()]] : 'permit_empty|min_length[8]|' . Passwords::getMaxLengthRule(),
             'password_confirm' => $creating ? 'required|matches[password]' : 'matches[password]',
             'group' => 'required|in_list[' . $groups . ']', 'campus_id' => 'permit_empty|is_natural_no_zero', 'active' => $creating ? 'permit_empty' : 'required|in_list[0,1]',
         ];

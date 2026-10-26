@@ -12,21 +12,17 @@ $users = $users ?? [];
     </div>
     <button type="button" class="button" data-modal-open="create-account">Create staff account</button>
 </header>
-<section class="panel filter-bar" aria-label="Staff account filters">
-    <label>Role<select data-table-filter="staff-users-table" data-column="2">
-            <option value="">All roles</option><?php foreach ($groups as $key => $group): ?><option value="<?= esc($key) ?>"><?= esc($group['title']) ?></option><?php endforeach ?>
-        </select></label>
-    <label>Campus<select data-table-filter="staff-users-table" data-column="3">
-            <option value="">All campuses</option><?php foreach ($campuses as $campus): ?><option value="<?= esc($campus['id']) ?>"><?= esc($campus['name']) ?></option><?php endforeach ?>
-        </select></label>
-    <label>Status<select data-table-filter="staff-users-table" data-column="4">
-            <option value="">All statuses</option>
-            <option value="1">Active</option>
-            <option value="0">Inactive</option>
-        </select></label>
-    <div class="filter-summary"><span class="filter-summary-label">Matching accounts</span><strong data-filter-count="staff-users-table"><?= count($users) ?> shown</strong></div>
-    <div class="filter-actions"><button type="button" class="button" data-apply-filters="staff-users-table">Filter</button><button type="button" class="button secondary" data-reset-filters="staff-users-table">Reset</button></div>
-</section>
+<?= view('components/filter_bar', [
+    'tableId' => 'staff-users-table',
+    'ariaLabel' => 'Staff account filters',
+    'summary' => 'Matching accounts',
+    'count' => count($users),
+    'filters' => [
+        ['label' => 'Role', 'column' => 2, 'options' => array_merge([['value' => '', 'label' => 'All roles']], array_map(static fn ($key, $group) => ['value' => $key, 'label' => $group['title']], array_keys($groups), $groups))],
+        ['label' => 'Campus', 'column' => 3, 'options' => array_merge([['value' => '', 'label' => 'All campuses']], array_map(static fn ($campus) => ['value' => $campus['id'], 'label' => $campus['name']], $campuses))],
+        ['label' => 'Status', 'column' => 4, 'options' => [['value' => '', 'label' => 'All statuses'], ['value' => '1', 'label' => 'Active'], ['value' => '0', 'label' => 'Inactive']]],
+    ],
+]) ?>
 <dialog id="create-account" class="modal" data-open-on-error>
     <header class="modal-header">
         <h2>Create staff account</h2><button type="button" class="modal-close" data-modal-close>×</button>
@@ -40,12 +36,7 @@ $users = $users ?? [];
     </div>
 </dialog>
 <section class="table-workspace">
-    <header class="table-toolbar">
-        <div class="table-title">
-            <h2>User accounts</h2><span class="table-count" data-table-count="staff-users-table"><?= count($users) ?> shown</span>
-        </div>
-        <div class="table-tools"><input class="table-search" type="search" data-table-search="staff-users-table" placeholder="Search staff accounts"></div>
-    </header>
+    <?= view('components/table_toolbar', ['tableId' => 'staff-users-table', 'title' => 'User accounts', 'count' => count($users), 'searchPlaceholder' => 'Search staff accounts']) ?>
     <div class="table-wrap">
         <table id="staff-users-table" class="data-table">
             <thead>

@@ -9,31 +9,18 @@ $requests = $requests ?? [];
         <p class="muted">Verify identity before completing a reset.</p>
     </div>
 </header>
-<section class="panel filter-bar" aria-label="Password reset ticket filters">
-    <label>Channel<select data-table-filter="reset-tickets-table" data-column="2">
-            <option value="">All channels</option>
-            <option value="online">Online</option>
-            <option value="walk-in">Walk-in</option>
-            <option value="email">Email</option>
-            <option value="phone">Phone</option>
-        </select></label>
-    <label>Status<select data-table-filter="reset-tickets-table" data-column="3">
-            <option value="">All statuses</option>
-            <option>verified</option>
-            <option>reset</option>
-            <option>closed</option>
-            <option>rejected</option>
-        </select></label>
-    <div class="filter-summary"><span class="filter-summary-label">Matching tickets</span><strong data-filter-count="reset-tickets-table"><?= count($requests) ?> shown</strong></div>
-    <div class="filter-actions"><button type="button" class="button" data-apply-filters="reset-tickets-table">Filter</button><button type="button" class="button secondary" data-reset-filters="reset-tickets-table">Reset</button></div>
-</section>
+<?= view('components/filter_bar', [
+    'tableId' => 'reset-tickets-table',
+    'ariaLabel' => 'Password reset ticket filters',
+    'summary' => 'Matching tickets',
+    'count' => count($requests),
+    'filters' => [
+        ['label' => 'Channel', 'column' => 2, 'options' => [['value' => '', 'label' => 'All channels'], ['value' => 'online', 'label' => 'Online'], ['value' => 'walk-in', 'label' => 'Walk-in'], ['value' => 'email', 'label' => 'Email'], ['value' => 'phone', 'label' => 'Phone']]],
+        ['label' => 'Status', 'column' => 3, 'options' => array_merge([['value' => '', 'label' => 'All statuses']], array_map(static fn ($value) => ['value' => $value, 'label' => $value], ['verified', 'reset', 'closed', 'rejected']))],
+    ],
+]) ?>
 <section class="table-workspace">
-    <header class="table-toolbar">
-        <div class="table-title">
-            <h2>Reset requests</h2><span class="table-count" data-table-count="reset-tickets-table"><?= count($requests) ?> shown</span>
-        </div>
-        <div class="table-tools"><input class="table-search" type="search" data-table-search="reset-tickets-table" placeholder="Search reset tickets"></div>
-    </header>
+    <?= view('components/table_toolbar', ['tableId' => 'reset-tickets-table', 'title' => 'Reset requests', 'count' => count($requests), 'searchPlaceholder' => 'Search reset tickets']) ?>
     <div class="table-wrap">
         <table id="reset-tickets-table" class="data-table">
             <thead>

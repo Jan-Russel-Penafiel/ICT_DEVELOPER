@@ -11,34 +11,19 @@ $campuses = $campuses ?? [];
     </div>
     <?php if (staff_can('admin', 'ict')): ?><form method="get" action="<?= site_url('staff/ids/export') ?>"><button type="submit" class="button">Export production CSV</button></form><?php endif ?>
 </header>
-<section class="panel filter-bar" aria-label="ID request filters">
-    <label>Status<select data-table-filter="id-requests-table" data-column="3">
-            <option value="">All statuses</option>
-            <option>Submitted</option>
-            <option>Verified</option>
-            <option>Needs correction</option>
-            <option>Printed</option>
-            <option>Released</option>
-            <option>Rejected</option>
-        </select></label>
-    <label>Request type<select data-table-filter="id-requests-table" data-column="0">
-            <option value="">All request types</option>
-            <option>new</option>
-            <option>replacement</option>
-        </select></label>
-    <label>Campus<select data-table-filter="id-requests-table" data-column="2">
-            <option value="">All campuses</option><?php foreach ($campuses as $campus): ?><option value="<?= esc($campus['name']) ?>"><?= esc($campus['name']) ?></option><?php endforeach ?>
-        </select></label>
-    <div class="filter-summary"><span class="filter-summary-label">Matching requests</span><strong data-filter-count="id-requests-table"><?= count($requests) ?> shown</strong></div>
-    <div class="filter-actions"><button type="button" class="button" data-apply-filters="id-requests-table">Filter</button><button type="button" class="button secondary" data-reset-filters="id-requests-table">Reset</button></div>
-</section>
+<?= view('components/filter_bar', [
+    'tableId' => 'id-requests-table',
+    'ariaLabel' => 'ID request filters',
+    'summary' => 'Matching requests',
+    'count' => count($requests),
+    'filters' => [
+        ['label' => 'Status', 'column' => 3, 'options' => array_merge([['value' => '', 'label' => 'All statuses']], array_map(static fn ($value) => ['value' => $value, 'label' => $value], ['Submitted', 'Verified', 'Needs correction', 'Printed', 'Released', 'Rejected']))],
+        ['label' => 'Request type', 'column' => 0, 'options' => [['value' => '', 'label' => 'All request types'], ['value' => 'new', 'label' => 'new'], ['value' => 'replacement', 'label' => 'replacement']]],
+        ['label' => 'Campus', 'column' => 2, 'options' => array_merge([['value' => '', 'label' => 'All campuses']], array_map(static fn ($campus) => ['value' => $campus['name'], 'label' => $campus['name']], $campuses))],
+    ],
+]) ?>
 <section class="table-workspace">
-    <header class="table-toolbar">
-        <div class="table-title">
-            <h2>ID requests</h2><span class="table-count" data-table-count="id-requests-table"><?= count($requests) ?> shown</span>
-        </div>
-        <div class="table-tools"><input class="table-search" type="search" placeholder="Search reference or student" data-table-search="id-requests-table" aria-label="Search ID requests"></div>
-    </header>
+    <?= view('components/table_toolbar', ['tableId' => 'id-requests-table', 'title' => 'ID requests', 'count' => count($requests), 'searchPlaceholder' => 'Search reference or student']) ?>
     <div class="table-wrap">
         <table id="id-requests-table" class="data-table">
             <thead>

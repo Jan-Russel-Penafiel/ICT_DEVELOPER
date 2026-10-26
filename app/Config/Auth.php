@@ -4,11 +4,20 @@ declare(strict_types=1);
 
 namespace Config;
 
+use CodeIgniter\Shield\Authentication\Passwords\CompositionValidator;
 use CodeIgniter\Shield\Config\Auth as ShieldAuth;
 
 class Auth extends ShieldAuth
 {
     public bool $allowRegistration = false;
+
+    /**
+     * Staff password creation only requires a minimum length.
+     *
+     * @var list<class-string<\CodeIgniter\Shield\Authentication\Passwords\ValidatorInterface>>
+     */
+    public array $passwordValidators = [CompositionValidator::class];
+    public int $minimumPasswordLength = 8;
 
     /**
      * Keep users signed in with a persistent, database-backed token.
